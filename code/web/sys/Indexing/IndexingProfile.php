@@ -215,7 +215,7 @@ class IndexingProfile extends DataObject {
 							'symphony' => 'Symphony'],
 				'description' => 'The class to use while indexing the records',
 				'required' => true,
-				'onchange' => 'return AspenDiscovery.IndexingClass.indexingClassSelect2();',
+				'onchange' => 'return AspenDiscovery.IndexingClass.indexingClassSelect();',
 				'default' => 'IlsRecord',
 				'forcesReindex' => true,
 			],

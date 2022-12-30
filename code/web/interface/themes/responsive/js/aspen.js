@@ -8738,6 +8738,7 @@ AspenDiscovery.Admin = (function () {
 				$("#propertyRowformatMap").show();
 				$("#propertyRowcheckRecordForLargePrint").hide();
 			}
+			AspenDiscovery.IndexingClass.indexingClassSelect();
 		},
 		updateLayoutSettingsFields: function () {
 			var useHomeLink = $('#useHomeLinkSelect').val();
@@ -9105,6 +9106,7 @@ AspenDiscovery.Admin = (function () {
 		},
 	};
 }(AspenDiscovery.Admin || {}));
+
 AspenDiscovery.Authors = (function () {
 	return {
 		loadEnrichmentInfo: function (id) {
@@ -13934,7 +13936,7 @@ AspenDiscovery.Wikipedia = (function(){
 }(AspenDiscovery.Wikipedia));
 AspenDiscovery.IndexingClass = (function () {
     return {
-        indexingClassSelect2: function (id) {
+        indexingClassSelect: function (id) {
             //Hide all
             $(".form-group").each(function () {
                 $(this).hide();
@@ -13964,7 +13966,7 @@ AspenDiscovery.IndexingClass = (function () {
 
             //Show rows for selected class
             var iterator = ilsOptions[$("#indexingClassSelect").val()];
-            //iterator.concat(ilsOptions['commonFields']);
+            iterator = $.merge(ilsOptions["commonFields"],iterator);
             iterator.forEach(function (value) {
                 $("#" + value).show();
             });
