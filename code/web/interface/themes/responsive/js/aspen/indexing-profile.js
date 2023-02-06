@@ -1,5 +1,6 @@
 AspenDiscovery.IndexingClass = (function () {
     return {
+
         indexingClassSelect: function (id) {
 //Hide all
             $(".form-group").each(function () {
@@ -10,7 +11,6 @@ AspenDiscovery.IndexingClass = (function () {
             $("#propertyRowid").show();
             $("#propertyRowindexingClass").show();
             $(".btn-group").parent().show();
-
 
 
 //Config per Class
@@ -32,14 +32,22 @@ AspenDiscovery.IndexingClass = (function () {
 
 //Show rows for selected class
             var selectedIndexingClass = $("#indexingClassSelect").val();
-            if (selectedIndexingClass != '...'){
-                
-                $('#indexingClassSelect').attr("disabled", true);
-                var iterator = ilsOptions[selectedIndexingClass];
-                iterator = $.merge(ilsOptions['commonFields'], iterator);
-                iterator.forEach(function (value) {
-                    $("#" + value).show();
-                });
+            var selectedIndexingClassText = $("#indexingClassSelect option:selected").text();
+
+            if (selectedIndexingClass !== '...') {
+
+                var answer = confirm("Do you confirm that " + selectedIndexingClassText + " is the correct option ?");
+                if(answer){
+
+                    $('#indexingClassSelect').attr("disabled", true);
+                    var iterator = ilsOptions[selectedIndexingClass];
+                    iterator = $.merge(ilsOptions['commonFields'], iterator);
+                    iterator.forEach(function (value) {
+                        $("#" + value).show();
+                    });
+                } else{
+                    $("#indexingClassSelect").val('...');
+                }
             }
         }
     }

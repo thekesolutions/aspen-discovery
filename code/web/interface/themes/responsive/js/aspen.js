@@ -13936,7 +13936,22 @@ AspenDiscovery.Wikipedia = (function(){
 }(AspenDiscovery.Wikipedia));
 AspenDiscovery.IndexingClass = (function () {
     return {
+
         indexingClassSelect: function (id) {
+            /*
+            var index;
+            var newValue;
+            index = $("#indexingClassSelect").selectedIndex;
+            if (index >= 0 && this.options.length > index) {
+            newValue = this.options[index].value;
+            }
+            var answer = confirm("Are you sure want to change option " + index + "?");
+            if(answer)
+            {
+            oldValue = newValue;
+            }else{
+            box.value = oldValue;
+            }*/
 //Hide all
             $(".form-group").each(function () {
                 $(this).hide();
@@ -13946,7 +13961,6 @@ AspenDiscovery.IndexingClass = (function () {
             $("#propertyRowid").show();
             $("#propertyRowindexingClass").show();
             $(".btn-group").parent().show();
-
 
 
 //Config per Class
@@ -13968,13 +13982,22 @@ AspenDiscovery.IndexingClass = (function () {
 
 //Show rows for selected class
             var selectedIndexingClass = $("#indexingClassSelect").val();
-            if (selectedIndexingClass != '...'){
-                $('#indexingClassSelect').attr("disabled", true);
-                var iterator = ilsOptions[selectedIndexingClass];
-                iterator = $.merge(ilsOptions['commonFields'], iterator);
-                iterator.forEach(function (value) {
-                    $("#" + value).show();
-                });
+            var selectedIndexingClassText = $("#indexingClassSelect option:selected").text();
+
+            if (selectedIndexingClass !== '...') {
+
+                var answer = confirm("Do you confirm that " + selectedIndexingClassText + " is the correct option ?");
+                if(answer){
+
+                    $('#indexingClassSelect').attr("disabled", true);
+                    var iterator = ilsOptions[selectedIndexingClass];
+                    iterator = $.merge(ilsOptions['commonFields'], iterator);
+                    iterator.forEach(function (value) {
+                        $("#" + value).show();
+                    });
+                } else{
+                    $("#indexingClassSelect").val('...');
+                }
             }
         }
     }
