@@ -9,6 +9,7 @@ AspenDiscovery.IndexingClass = (function () {
 
 //Show Class Select
             $("#propertyRowid").show();
+            $("#propertyRowname").show();
             $("#propertyRowindexingClass").show();
             $(".btn-group").parent().show();
 
@@ -34,21 +35,19 @@ AspenDiscovery.IndexingClass = (function () {
             var selectedIndexingClass = $("#indexingClassSelect").val();
             var selectedIndexingClassText = $("#indexingClassSelect option:selected").text();
 
-            if (selectedIndexingClass !== '...') {
+            var answer = confirm("Do you confirm that " + selectedIndexingClassText + " is the correct option ?");
+            if (answer) {
 
-                var answer = confirm("Do you confirm that " + selectedIndexingClassText + " is the correct option ?");
-                if(answer){
-
-                    $('#indexingClassSelect').attr("disabled", true);
-                    var iterator = ilsOptions[selectedIndexingClass];
-                    iterator = $.merge(ilsOptions['commonFields'], iterator);
-                    iterator.forEach(function (value) {
-                        $("#" + value).show();
-                    });
-                } else{
-                    $("#indexingClassSelect").val('...');
-                }
+                $('#indexingClassSelect').attr("disabled", true);
+                var iterator = ilsOptions[selectedIndexingClass];
+                iterator = $.merge(ilsOptions['commonFields'], iterator);
+                iterator.forEach(function (value) {
+                    $("#" + value).show();
+                });
+            } else {
+                $("#indexingClassSelect").val('...');
             }
+
         }
     }
 }(AspenDiscovery.IndexingClass || {}));
