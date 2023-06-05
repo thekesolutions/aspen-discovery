@@ -1,5 +1,5 @@
 #Base it on Debian 10
-FROM debian:buster
+FROM debian:buster-slim
 
 #Install deps
 RUN apt -y update \
