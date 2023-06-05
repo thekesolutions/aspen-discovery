@@ -70,7 +70,7 @@ RUN a2enmod rewrite
 
 # Add aspen-discovery
 RUN cd /usr/local \
-  && git clone --depth=1 -b 23.04.00 https://github.com/mdnoble73/aspen-discovery.git \
+  && git clone --depth=1 https://github.com/mdnoble73/aspen-discovery.git \
   && rm -rf ./aspen-discovery/.git
 
 # Create temp smarty directories
