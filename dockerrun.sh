@@ -12,7 +12,7 @@ chmod -R a+wr  /usr/local/aspen-discovery/tmp/
 
 chown -R aspen /data/aspen-discovery/test.localhostaspen/solr7;
 
-chown -R /usr/local/aspen-discovery/sites/default/solr-7.6.0/server/;
+chown -R a+wr /usr/local/aspen-discovery/sites/default/solr-7.6.0/server/
 
 service apache2 start;
 
