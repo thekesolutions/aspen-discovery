@@ -84,7 +84,7 @@ RUN cd /usr/local/aspen-discovery/install \
   && sed -i 's/adduser/useradd/g' setup_aspen_user_debian.sh \
   && mkdir -p /var/log/aspen-discovery \
   && bash /usr/local/aspen-discovery/install/setup_aspen_user_debian.sh \
-  && rm -R /usr/local/aspen-discovery
+  && rm -R /usr/local/aspen-discovery/
 
 COPY dockerrun.sh /
 RUN chmod +x /dockerrun.sh
