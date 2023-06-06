@@ -8,9 +8,9 @@ service cron start;
 
 mkdir -p /usr/local/aspen-discovery/tmp/smarty/compile/
 
-mkdir -p /var/logs/aspen-discovery/test.localhostaspen 
+mkdir -p /var/log/aspen-discovery/test.localhostaspen 
 
-chmod -R /var/logs/
+chmod -R a+wr /var/log/
 
 chmod -R a+wr  /usr/local/aspen-discovery/
 
