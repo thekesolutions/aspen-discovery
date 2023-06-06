@@ -84,6 +84,8 @@ RUN cd /usr/local/aspen-discovery/install \
   && sed -i 's/adduser/useradd/g' setup_aspen_user_debian.sh \
   && mkdir -p /var/log/aspen-discovery \
   && bash /usr/local/aspen-discovery/install/setup_aspen_user_debian.sh \
+  && mkdir -P /data/aspen-discovery \
+  && bash /usr/local/aspen-discovery/data_dir_setup/update_solr_files_debian.sh test.localhostaspen \
   && rm -R /usr/local/aspen-discovery/
 
 COPY dockerrun.sh /

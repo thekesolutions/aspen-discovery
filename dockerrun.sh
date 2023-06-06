@@ -8,11 +8,13 @@ service cron start;
 
 mkdir -p /usr/local/aspen-discovery/tmp/smarty/compile/
 
-chmod -R a+wr  /usr/local/aspen-discovery/tmp/
+mkdir -p /var/logs/aspen-discovery/test.localhostaspen 
+
+chmod -R /var/logs/
+
+chmod -R a+wr  /usr/local/aspen-discovery/
 
 chown -R aspen /data/aspen-discovery/test.localhostaspen/solr7;
-
-chmod -R a+wr /usr/local/aspen-discovery/sites/default/solr-7.6.0/server/
 
 service apache2 start;
 

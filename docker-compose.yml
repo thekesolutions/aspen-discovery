@@ -1,0 +1,42 @@
+version: '3.3'
+services:
+    aspen-dev-box:
+        image: registry.gitlab.com/aspen-discovery/aspen-dev-box-image/aspen-dev-box:test
+        volumes:
+            - '$ASPEN_CLONE:/usr/local/aspen-discovery'
+            - '$ASPEN_DOCKER/site/:/usr/local/aspen-discovery/sites/test.localhostaspen'
+            - '$ASPEN_DOCKER/etc/apache2/sites-enabled:/etc/apache2/sites-enabled'
+            - '$ASPEN_DOCKER/site/conf/crontab_settings.txt:/etc/cron.d/cron'
+        ports:
+            - '8084:8080'
+            - '8083:80'
+        container_name: containeraspen
+        networks:
+           external:
+        depends_on:
+            mariadb:
+                condition: service_healthy
+        tty: true
+
+
+    mariadb:
+        container_name: aspen-mariadb
+        environment:
+            - MARIADB_ROOT_PASSWORD=aspen
+            - MARIADB_DATABASE:aspen
+            - MARIADB_USER:aspensuper
+            - MARIADB_PASSWORD:aspensuper
+            - MYSQL_TCP_PORT:7000
+        image: 'mariadb:latest'
+        volumes:
+          - $ASPEN_DOCKER/setup.sql:/docker-entrypoint-initdb.d/init-script.sql
+        healthcheck:
+            test: ["CMD", "mysqladmin" ,"ping", "-paspen", "-h", "localhost"]
+            timeout: 20s
+            retries: 10
+        networks:
+          external:
+
+networks:
+   external:
+        name: koha_kohanet
