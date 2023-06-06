@@ -85,12 +85,13 @@ RUN cd /usr/local/aspen-discovery/install \
   && mkdir -p /var/log/aspen-discovery \
   && bash /usr/local/aspen-discovery/install/setup_aspen_user_debian.sh \
   && mkdir -p /data/aspen-discovery/test.localhostaspen/solr7 \
-  && cd /usr/local/aspen-discovery/data_dir_setup/ \
-  && bash ./update_solr_files_debian.sh test.localhostaspen \
+  && cp -r /usr/local/aspen-discovery/data_dir_setup/solr7 /data/aspen-discovery/test.localhostaspen \
   && rm -R /usr/local/aspen-discovery/
 
 COPY dockerrun.sh /
+
 RUN chmod +x /dockerrun.sh
+
 ENTRYPOINT [ "/dockerrun.sh" ]
 CMD [ "sleep", "infinity" ]
 # Increase entropy
@@ -98,7 +99,3 @@ CMD [ "sleep", "infinity" ]
 #    && cp /usr/local/aspen-discovery/install/rngd.service /etc/systemd/system/rngd.service \
 #    && systemctl daemon-reload \
 #    && systemctl start rngd
-
-# Estoy haciendo prueba para manejar versiones de docker
-
-
