@@ -13,9 +13,6 @@ services:
         container_name: containeraspen
         networks:
            external:
-        depends_on:
-            mariadb:
-                condition: service_healthy
         tty: true
 
 
