@@ -36,18 +36,19 @@ git clone https://gitlab.com/aspen-discovery/aspen-dev-box-image.git aspen-dev-b
 ```
 
 * Clone the `aspen-discovery` project (skip and adjust the paths if you already have it):
+-- I would recommend forking the below repository and cloning your fork for this.
 
 ```shell
 cd $PROJECTS_DIR
 git clone https://github.com/mdnoble73/aspen-discovery.git aspen-discovery
 ```
 
-* Set some **mandatory** environment variables:
+* Set some **mandatory** environment variables in your .bashrc:
 
 ```
-export ASPEN_DEV_BOX=~/Documents/aspendockerstruct
-export ASPEN_CLONE=$ASPEN_DEV_BOX/aspen-discovery
-export ASPEN_DOCKER=$ASPEN_DEV_BOX/aspen-dev-box
+export PROJECTS_DIR=~/git
+export ASPEN_CLONE=$PROJECTS_DIR/aspen-discovery
+export ASPEN_DOCKER=$PROJECTS_DIR/aspen-dev-box
 ```
 
 **Note:** you will need to log out and log back in (or start a new terminal window) for this to take effect.
@@ -55,6 +56,31 @@ export ASPEN_DOCKER=$ASPEN_DEV_BOX/aspen-dev-box
 * Now you can start up your devbox
 
 ```shell
-cd aspen-dev-box
+cd $ASPEN_DOCKER
 docker compose up
 ```
+
+## USAGE:
+This project exposes port 8083 and 8084: 
+
+* `localhost:8083` will take you to the discovery page where you can interact with aspen-discovery
+
+* `localhost:8084` will take you to the solr dashboard.
+
+* Running `newSQL.sh` will update the DB setup file to the latest version contained within your aspen-discovery clone.
+
+**LOGINS:**
+Listed below are the default logins for both the Database and Aspen discovery interface
+
+* Discovery:
+```
+Username: aspen_admin
+Password: password
+```
+* Database:
+```
+Username: root
+Password: aspen
+Table: aspen
+```
+
