@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
+rm -R $ASPEN_DOCKER/setup.sql
 
-cp $ASPEN_CLONE/install/aspen.sql $ASPEN_DOCKER/test.sql
+cp $ASPEN_CLONE/install/aspen.sql $ASPEN_DOCKER/setup.sql
 
 sed -i "1i CREATE DATABASE IF NOT EXISTS aspen;\nCREATE USER 'aspensuper'@'%' IDENTIFIED BY 'aspensuper';\nGRANT ALL PRIVILEGES ON *.* TO 'aspensuper'@'%';\nFLUSH PRIVILEGES;\nUSE aspen;\n" $ASPEN_DOCKER/test.sql
 
@@ -22,4 +23,4 @@ INSERT INTO translation_maps VALUES (1,1,'location',0),(2,1,'sub_location',0),(3
 UNLOCK TABLES;
 
 UPDATE modules set enabled = 1 where name = 'Koha';
-" >>$ASPEN_DOCKER/test.sql
+" >>$ASPEN_DOCKER/setup.sql
