@@ -3,7 +3,7 @@ rm -R $ASPEN_DOCKER/setup.sql
 
 cp $ASPEN_CLONE/install/aspen.sql $ASPEN_DOCKER/setup.sql
 
-sed -i "1i CREATE DATABASE IF NOT EXISTS aspen;\nCREATE USER 'aspensuper'@'%' IDENTIFIED BY 'aspensuper';\nGRANT ALL PRIVILEGES ON *.* TO 'aspensuper'@'%';\nFLUSH PRIVILEGES;\nUSE aspen;\n" $ASPEN_DOCKER/test.sql
+sed -i "1i CREATE DATABASE IF NOT EXISTS aspen;\nCREATE USER 'aspensuper'@'%' IDENTIFIED BY 'aspensuper';\nGRANT ALL PRIVILEGES ON *.* TO 'aspensuper'@'%';\nFLUSH PRIVILEGES;\nUSE aspen;\n" $ASPEN_DOCKER/setup.sql
 
 echo "
 INSERT INTO account_profiles(id,name,driver,loginConfiguration,authenticationMethod,vendorOpacUrl,patronApiUrl,recordSource,weight,databaseHost,databaseName,databaseUser,databasePassword,sipHost,sipPort,sipUser,sipPassword,databasePort,databaseTimezone,oAuthClientId,oAuthClientSecret,ils,apiVersion,staffUsername,staffPassword,workstationId,domain)
