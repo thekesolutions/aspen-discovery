@@ -473,8 +473,8 @@ class Location extends DataObject {
                 'editPermissions' => ['Location Address and Hours Settings'],
                 'affectsLiDA' => true,
 			],
-            'secondary phone' => [
-                'property' => 'secondary phone',
+            'secondaryPhone' => [
+                'property' => 'secondaryPhone',
                 'type' => 'text',
                 'label' => 'Secondary Phone Number',
                 'description' => 'The secondary phone number for the site .',
