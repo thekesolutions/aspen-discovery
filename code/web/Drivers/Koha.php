@@ -5,6 +5,7 @@ require_once ROOT_DIR . '/Drivers/AbstractIlsDriver.php';
 require_once ROOT_DIR . '/Drivers/KohaAPI.php';
 
 class Koha extends AbstractIlsDriver {
+	private $kohaAPI;
 	private $dbConnection = null;
 
 	/** @var CurlWrapper */
@@ -1233,6 +1234,7 @@ class Koha extends AbstractIlsDriver {
 		$this->delApiCurlWrapper->setTimeout(30);
 		$this->renewalsCurlWrapper = new CurlWrapper();
 		$this->renewalsCurlWrapper->setTimeout(30);
+		$this->kohaAPI = new KohaAPI($accountProfile);
 	}
 
 	function __destruct() {
@@ -3015,43 +3017,13 @@ class Koha extends AbstractIlsDriver {
 		return false;
 	}
 
-	private $oauthToken = null;
 
 	function getOAuthToken() {
-		if ($this->oauthToken == null) {
-			$apiUrl = $this->getWebServiceUrl() . "/api/v1/oauth/token";
-			$postParams = [
-				'grant_type' => 'client_credentials',
-				'client_id' => $this->accountProfile->oAuthClientId,
-				'client_secret' => $this->accountProfile->oAuthClientSecret,
-			];
-
-			$this->curlWrapper->addCustomHeaders([
-				'Accept: application/json',
-				'Content-Type: application/x-www-form-urlencoded',
-			], false);
-			$response = $this->curlWrapper->curlPostPage($apiUrl, $postParams);
-			$json_response = json_decode($response);
-			ExternalRequestLogEntry::logRequest('koha.getOAuthToken', 'POST', $apiUrl, $this->curlWrapper->getHeaders(), json_encode($postParams), $this->curlWrapper->getResponseCode(), $response, ['client_secret' => $this->accountProfile->oAuthClientSecret]);
-			if (!empty($json_response->access_token)) {
-				$this->oauthToken = $json_response->access_token;
-			} else {
-				$this->oauthToken = false;
-			}
-		}
-		return $this->oauthToken;
+		return $this->kohaAPI->getOAuthToken();
 	}
 
-	private $basicAuthToken = null;
-
 	function getBasicAuthToken() {
-		if ($this->basicAuthToken == null) {
-			$client = UserAccount::getActiveUserObj();
-			$client_id = $client->getBarcode();
-			$client_secret = $client->getPasswordOrPin();
-			$this->basicAuthToken = base64_encode($client_id . ":" . $client_secret);
-		}
-		return $this->basicAuthToken;
+		return $this->kohaAPI->getBasicAuthToken();
 	}
 
 	function cancelHold($patron, $recordId, $cancelId = null, $isIll = false): array {
