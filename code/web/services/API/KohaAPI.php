@@ -5,8 +5,8 @@ class KohaAPI {
 
 	public $accountProfile;
 	private $apiKey;
-	private $oauthToken = null;
-	private $basicAuthToken = null;
+	private $oauthToken;
+	private $basicAuthToken ;
 
 	/** @var CurlWrapper */
 	private $apiCurlWrapper;
@@ -15,6 +15,8 @@ class KohaAPI {
 
 	function __construct($accountProfile){
 		$this->accountProfile = $accountProfile;
+		$this->oauthToken = $this->getOAuthToken();
+		$this->basicAuthToken = $this->getBasicAuthToken();
 	}
 
 	function getOAuthToken() {
@@ -53,6 +55,7 @@ class KohaAPI {
 	}
 
 	function refreshToken() {
+
 	}
 
 	public function getWebServiceURL(): string {
@@ -70,7 +73,8 @@ class KohaAPI {
 
 	public function get($endpoint,$useOAuth = true): mixed {
 		$apiUrl = $this->getWebServiceURL() . $endpoint;
-		$token = $useOAuth ? $this->getOAuthToken() : $this->getBasicAuthToken();
+		$token = $useOAuth ? $this->oauthToken : $this->basicAuthToken;
+		//Setting headers
 		$this->curlWrapper->addCustomHeaders([
 			'Authorization: Bearer ' . $token,
 			'User-Agent: Aspen Discovery',
@@ -80,10 +84,13 @@ class KohaAPI {
 			'Host: ' . preg_replace('~http[s]?://~', '', $this->getWebServiceURL()),
 			'Accept-Encoding: gzip, deflate',
 		],false);
+		//Getting headers
+		$headers = $this->apiCurlWrapper->getHeaders();
+		//Getting response body
 		$response = json_decode($this->apiCurlWrapper->curlSendPage($apiUrl,'GET'));
 		$responseCode = $this->apiCurlWrapper->getResponseCode();
-		$headers = $this->apiCurlWrapper->getHeaders();
 		if ($responseCode == 200){
+			//Saving log request
 			ExternalRequestLogEntry::logRequest('koha-api.get', 'GET', $apiUrl, $headers, "", $responseCode, $response, []);
 			return $response;
 		} else {
@@ -93,7 +100,7 @@ class KohaAPI {
 
 	public function post($endpoint,$params,$useOAuth = true): mixed {
 		$apiUrl = $this->getWebServiceURL() . $endpoint;
-		$token  = $useOAuth ? $this->getOAuthToken() : $this->getBasicAuthToken();
+		$token  = $useOAuth ? $this->oauthToken : $this->basicAuthToken;
 		//Setting headers
 		$this->curlWrapper->addCustomHeaders([
 			'Authorization: Bearer ' . $token,
@@ -121,7 +128,7 @@ class KohaAPI {
 
 	public function put($endpoint,$params,$useOAuth = true): mixed {
 		$apiUrl = $this->getWebServiceURL() . $endpoint;
-		$token  = $useOAuth ? $this->getOAuthToken() : $this->getBasicAuthToken();
+		$token  = $useOAuth ? $this->oauthToken : $this->basicAuthToken;
 		//Setting headers
 		$this->apiCurlWrapper->addCustomHeaders([
 			'Authorization: Bearer ' . $token,
@@ -149,7 +156,7 @@ class KohaAPI {
 
 	public function delete($endpoint,$useOAuth = true): mixed {
 		$apiUrl = $this->getWebServiceURL() . $endpoint;
-		$token  = $useOAuth ? $this->getOAuthToken() : $this->getBasicAuthToken();
+		$token  = $useOAuth ? $this->oauthToken : $this->basicAuthToken;
 		//Setting headers
 		$this->apiCurlWrapper->addCustomHeaders([
 			'Authorization: Bearer ' . $token,
