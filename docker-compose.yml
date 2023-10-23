@@ -1,28 +1,27 @@
-version: "3.3"
+version: '3.5'
 services:
-  aspen-dev-box:
-    image: registry.gitlab.com/aspen-discovery/aspen-dev-box-image/aspen-dev-box:main
-    volumes:
-      - "$ASPEN_CLONE:/usr/local/aspen-discovery"
-      - "$ASPEN_DOCKER/site/:/usr/local/aspen-discovery/sites/test.localhostaspen"
-      - "$ASPEN_DOCKER/etc/apache2/sites-enabled:/etc/apache2/sites-enabled"
-      - "$ASPEN_DOCKER/site/conf/crontab_settings.txt:/etc/cron.d/cron"
-      - "$ASPEN_DOCKER/aliases:/root/.bashrc"
-    ports:
-      - "8084:8080"
-      - "8083:80"
-    container_name: containeraspen
-    networks:
-      - koha_kohanet
-    tty: true
-    platform: linux/x86_64
-    depends_on:
-      aspendb:
-        condition: service_healthy
-    environment:
-      - WSL_IP
-    extra_hosts: 
-      - host.docker.internal:${WSL_IP:-host-gateway} 
+    aspen-dev-box:
+        image: registry.gitlab.com/aspen-discovery/aspen-dev-box-image/aspen-dev-box:main
+        volumes:
+            - '$ASPEN_CLONE:/usr/local/aspen-discovery'
+            - '$ASPEN_DOCKER/site/:/usr/local/aspen-discovery/sites/test.localhostaspen'
+            - '$ASPEN_DOCKER/etc/apache2/sites-enabled:/etc/apache2/sites-enabled'
+            - '$ASPEN_DOCKER/site/conf/crontab_settings.txt:/etc/cron.d/cron'
+            - "$ASPEN_DOCKER/aliases:/root/.bashrc"
+            - '$ASPEN_DOCKER/error_reporting.ini:/etc/php/8.0/apache2/conf.d/error_reporting.ini'
+            - '$ASPEN_DOCKER/xdebug.ini:/etc/php/8.0/apache2/conf.d/xdebug.ini'
+        ports:
+            - '8084:8080'
+            - '8083:80'
+        container_name: containeraspen
+        networks:
+          - koha_kohanet
+        platform: linux/x86_64
+        tty: true
+        environment:
+            XDEBUG_CONFIG: remote_host=host.docker.internal remote_port=9003 remote_enable=1
+        extra_hosts:
+            - "host.docker.internal:host-gateway" 
 
   aspendb:
     container_name: aspen-db
