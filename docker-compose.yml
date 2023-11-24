@@ -15,6 +15,7 @@ services:
     networks:
       - koha_kohanet
     tty: true
+    platform: linux/amd64
 
   aspendb:
     container_name: aspen-db
@@ -24,7 +25,7 @@ services:
       - MYSQL_USER:aspensuper
       - MYSQL_PASSWORD:aspensuper
       - MYSQL_TCP_PORT:7000
-    image: "mysql:8.0"
+    image: "mariadb:10.5"
     volumes:
       - $ASPEN_DOCKER/setup.sql:/docker-entrypoint-initdb.d/init-script.sql
     healthcheck:
@@ -33,6 +34,7 @@ services:
       retries: 10
     networks:
       - koha_kohanet
+    platform: linux/amd64
 
 networks:
   koha_kohanet:
