@@ -49,7 +49,13 @@ git clone https://github.com/mdnoble73/aspen-discovery.git aspen-discovery
 export PROJECTS_DIR=~/git
 export ASPEN_CLONE=$PROJECTS_DIR/aspen-discovery
 export ASPEN_DOCKER=$PROJECTS_DIR/aspen-dev-box
-export PATH=$PATH:$ASPEN_DOCKER/bin
+
+
+**LINUX ONLY:** 
+export PATH=$PATH:$ASPEN_DOCKER/bin/linux
+
+**MAC ONLY:**
+export PATH=$PATH:$ASPEN_DOCKER/bin/darwin
 ```
 
 **Note:** you will need to log out and log back in (or start a new terminal window) for this to take effect.
