@@ -1,7 +1,7 @@
-version: '3.5'
+version: "3.5"
 services:
     aspen-dev-box:
-        image: registry.gitlab.com/aspen-discovery/aspen-dev-box-image/aspen-dev-box:main
+        image: registry.gitlab.com/aspen-discovery/aspen-dev-box-image/aspen-dev-box:debug
         volumes:
             - '$ASPEN_CLONE:/usr/local/aspen-discovery'
             - '$ASPEN_DOCKER/site/:/usr/local/aspen-discovery/sites/test.localhostaspen'
@@ -35,7 +35,6 @@ services:
     volumes:
       - $ASPEN_DOCKER/setup.sql:/docker-entrypoint-initdb.d/init-script.sql
       - $ASPEN_DOCKER/my.cnf:/etc/mysql/conf.d/my.cnf
-
     healthcheck:
       interval: 30s
       retries: 10
