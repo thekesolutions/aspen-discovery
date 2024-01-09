@@ -15,7 +15,7 @@ services:
     networks:
       - koha_kohanet
     tty: true
-    platform: linux/amd64
+    platform: linux/x86_64
 
   aspendb:
     container_name: aspen-db
@@ -28,13 +28,15 @@ services:
     image: "mysql"
     volumes:
       - $ASPEN_DOCKER/setup.sql:/docker-entrypoint-initdb.d/init-script.sql
+      - $ASPEN_DOCKER/my.cnf:/etc/mysql/conf.d/my.cnf
+
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-paspen", "-h", "localhost"]
       timeout: 20s
       retries: 10
     networks:
       - koha_kohanet
-    platform: linux/amd64
+    platform: linux/x86_64
 
 networks:
   koha_kohanet:
