@@ -35,7 +35,9 @@ services:
       context: ~/${ASPEN_Instance}/aspen-discovery/docker/solr
       dockerfile: Dockerfile
     env_file:
-      - .env   
+      - .env
+    ports:
+      - "8983:8983"
     deploy:
       endpoint_mode: dnsrr
     volumes:
