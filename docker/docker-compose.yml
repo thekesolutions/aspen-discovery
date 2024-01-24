@@ -4,7 +4,10 @@ networks:
 services:
 
   backend:
-    image: $COMPOSE_ImagePath:$COMPOSE_ImageVersion
+    image: aspen-discovery/aspen:${COMPOSE_ImageVersion}
+    build:
+      context: ~/${ASPEN_Instance}/aspen-discovery/docker
+      dockerfile: Dockerfile
     env_file:
       - .env
     ports:
@@ -13,34 +16,38 @@ services:
       - net-aspen
     tty: true
     volumes:
-      - $COMPOSE_HostPath:/mnt
+      - ~/${ASPEN_Instance}:/mnt
 
   db:
     image: mariadb:10.3
     environment:
-      - MARIADB_ROOT_PASSWORD=$COMPOSE_RootPwd
+      - MARIADB_ROOT_PASSWORD=${COMPOSE_RootPwd}
     deploy:
       endpoint_mode: dnsrr
     volumes:
-      - $COMPOSE_HostPath/mariadb_data:/var/lib/mysql
+      - ~/${ASPEN_Instance}/mariadb_data:/var/lib/mysql
     networks:
       - net-aspen
 
   solr:
-    image: solr4aspen:$COMPOSE_ImageVersion
+    image: aspen-discovery/solr:${COMPOSE_ImageVersion}
+    build:
+      context: ~/${ASPEN_Instance}/aspen-discovery/docker/solr
+      dockerfile: Dockerfile
     env_file:
       - .env   
     deploy:
       endpoint_mode: dnsrr
     volumes:
-      - $COMPOSE_HostPath:/mnt
+      - ~/${ASPEN_Instance}:/mnt
+      - ~/${ASPEN_Instance}/solr_data:/var/solr
     networks:
       - net-aspen
     depends_on:
       - backend
       
   tunnel:
-    image: $COMPOSE_ImagePath:$COMPOSE_ImageVersion
+    image: aspen-discovery/aspen:${COMPOSE_ImageVersion}
     env_file:
       - .env
     environment:
@@ -50,7 +57,7 @@ services:
     deploy:
       endpoint_mode: dnsrr
     volumes:
-      - $COMPOSE_HostPath:/mnt
+      - ~/${ASPEN_Instance}:/mnt
     networks:
       - net-aspen
     entrypoint: ["/root/.ssh/tunnel.sh"]
