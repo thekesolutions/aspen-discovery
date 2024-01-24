@@ -13,7 +13,7 @@ services:
       - net-aspen
     tty: true
     volumes:
-      - $COMPOSE_ClientSrvPath:/mnt
+      - $COMPOSE_HostPath:/mnt
 
   db:
     image: mariadb:10.3
@@ -22,18 +22,18 @@ services:
     deploy:
       endpoint_mode: dnsrr
     volumes:
-      - $COMPOSE_ClientSrvPath/mariadb_data:/var/lib/mysql
+      - $COMPOSE_HostPath/mariadb_data:/var/lib/mysql
     networks:
       - net-aspen
 
   solr:
-    image: $COMPOSE_ImagePath:$COMPOSE_ImageVersion
+    image: solr4aspen:$COMPOSE_ImageVersion
     env_file:
       - .env   
     deploy:
       endpoint_mode: dnsrr
     volumes:
-      - $COMPOSE_ClientSrvPath:/mnt
+      - $COMPOSE_HostPath:/mnt
     networks:
       - net-aspen
     depends_on:
@@ -50,7 +50,7 @@ services:
     deploy:
       endpoint_mode: dnsrr
     volumes:
-      - $COMPOSE_ClientSrvPath:/mnt
+      - $COMPOSE_HostPath:/mnt
     networks:
       - net-aspen
     entrypoint: ["/root/.ssh/tunnel.sh"]
