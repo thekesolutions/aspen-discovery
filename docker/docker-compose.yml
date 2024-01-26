@@ -6,8 +6,10 @@ services:
   backend:
     image: aspen-discovery/aspen:${COMPOSE_ImageVersion}
     build:
-      context: ~/${ASPEN_Instance}/aspen-discovery/docker
+      context: aspen-discovery/docker
       dockerfile: Dockerfile
+      args:
+        - BRANCHNAME=${BRANCHNAME}
     env_file:
       - .env
     ports:
@@ -17,9 +19,12 @@ services:
     tty: true
     volumes:
       - ~/${ASPEN_Instance}:/mnt
+    depends_on:
+      - db
 
   db:
     image: mariadb:10.3
+    restart: always
     environment:
       - MARIADB_ROOT_PASSWORD=${COMPOSE_RootPwd}
     deploy:
@@ -32,7 +37,7 @@ services:
   solr:
     image: aspen-discovery/solr:${COMPOSE_ImageVersion}
     build:
-      context: ~/${ASPEN_Instance}/aspen-discovery/docker/solr
+      context: aspen-discovery/docker/solr
       dockerfile: Dockerfile
     env_file:
       - .env
@@ -49,17 +54,19 @@ services:
       - backend
       
   tunnel:
-    image: aspen-discovery/aspen:${COMPOSE_ImageVersion}
+    image: aspen-discovery/tunnel:${COMPOSE_ImageVersion}
+    build:
+      context: aspen-discovery/docker/tunnel
+      dockerfile: Dockerfile
+      args:
+        - TUNNEL_User=${TUNNEL_User:-tunnel}
     env_file:
       - .env
-    environment:
-      - COMPOSE_Cron=off
-      - COMPOSE_Apache=off
-      - COMPOSE_Solr=off
     deploy:
       endpoint_mode: dnsrr
     volumes:
       - ~/${ASPEN_Instance}:/mnt
     networks:
       - net-aspen
-    entrypoint: ["/root/.ssh/tunnel.sh"]
+    depends_on:
+      - backend
