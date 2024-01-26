@@ -1,5 +1,5 @@
 FROM solr:7.6.0-slim
-EXPOSE 80
+EXPOSE 8983
 USER root
 RUN apt-get update \
     && apt-get install -y sudo \
