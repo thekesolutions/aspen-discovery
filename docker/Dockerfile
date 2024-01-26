@@ -69,9 +69,9 @@ RUN apt -y update \
 COPY start.sh /start.sh
 
 #Adding tunnel directory
-COPY tunnel/ /root/.ssh/
-RUN cd /root/.ssh/ \
-    && chmod 700 config id_rsa.pub known_hosts
+#COPY tunnel/ /root/.ssh/
+#RUN cd /root/.ssh/ \
+#    && chmod 700 config id_rsa.pub known_hosts
 
 # Load apache modules
 RUN a2enmod rewrite
