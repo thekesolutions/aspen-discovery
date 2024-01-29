@@ -4,6 +4,6 @@ USER root
 RUN apt-get update \
     && apt-get install -y sudo \
     && rm -rf /var/lib/apt/lists/*
-COPY data_dir_setup/solr7/ /opt/solr/server/solr/configsets
+COPY aspen-discovery/data_dir_setup/solr7/ /opt/solr/server/solr/configsets
 RUN chown -R 8983:8983 /opt/solr/server/solr/configsets/ 
 USER solr
