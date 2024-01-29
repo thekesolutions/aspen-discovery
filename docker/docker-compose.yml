@@ -5,11 +5,6 @@ services:
 
   backend:
     image: aspen-discovery/aspen:${COMPOSE_ImageVersion}
-    build:
-      context: aspen-discovery/docker
-      dockerfile: Dockerfile
-      args:
-        - BRANCHNAME=${BRANCHNAME}
     env_file:
       - .env
     ports:
@@ -36,9 +31,6 @@ services:
 
   solr:
     image: aspen-discovery/solr:${COMPOSE_ImageVersion}
-    build:
-      context: aspen-discovery/docker/solr
-      dockerfile: Dockerfile
     env_file:
       - .env
     ports:
@@ -55,11 +47,6 @@ services:
       
   tunnel:
     image: aspen-discovery/tunnel:${COMPOSE_ImageVersion}
-    build:
-      context: aspen-discovery/docker/tunnel
-      dockerfile: Dockerfile
-      args:
-        - TUNNEL_User=${TUNNEL_User:-tunnel}
     env_file:
       - .env
     deploy:
