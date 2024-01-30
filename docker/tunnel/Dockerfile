@@ -1,9 +1,15 @@
 FROM alpine:3.19.0
 
 ARG TUNNEL_User=tunnel
+ENV TUNNEL_User=${TUNNEL_User}
 
-# Instalar sudo
-RUN apk add --no-cache sudo
+
+#Install dependencies
+RUN apk add --no-cache \
+  openssh-client \
+  ca-certificates \
+  bash \
+  sudo
 
 # Agregar el nuevo usuario y grupo
 RUN addgroup -g 1000 "${TUNNEL_User}" && \
@@ -19,17 +25,14 @@ USER root
 #Update packages
 RUN apk update
 
-#Install openssh client
-RUN apk add --no-cache openssh
+#Create ssh directory
+RUN mkdir -p /home/${TUNNEL_User}/.ssh
 
-# Cambiar al nuevo usuario
-USER ${TUNNEL_User}
+RUN touch /home/${TUNNEL_User}/.ssh/id_rsa
 
-# Establecer el directorio de trabajo
-WORKDIR /home/${TUNNEL_User}
-
-#Adding tunnel directory
-COPY aspen-discovery/docker/tunnel/tunnel.sh aspen-discovery/docker/tunnel/config /${TUNNEL_User}/.ssh/
+#Adding tunnel content
+COPY aspen-discovery/docker/tunnel/tunnel.sh aspen-discovery/docker/tunnel/config /home/${TUNNEL_User}/.ssh/
 
 #Add entrypoint
-ENTRYPOINT ["/tunnel.sh"]
+ENTRYPOINT ["/bin/ash", "-c", "/home/${TUNNEL_User}/.ssh/tunnel.sh"]
+
