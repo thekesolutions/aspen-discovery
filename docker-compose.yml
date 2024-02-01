@@ -25,7 +25,7 @@ services:
       - MYSQL_USER:aspensuper
       - MYSQL_PASSWORD:aspensuper
       - MYSQL_TCP_PORT:7000
-    image: "mysql"
+    image: "mariadb"
     volumes:
       - $ASPEN_DOCKER/setup.sql:/docker-entrypoint-initdb.d/init-script.sql
       - $ASPEN_DOCKER/my.cnf:/etc/mysql/conf.d/my.cnf
