@@ -1,0 +1,60 @@
+version: '3.7'
+networks:
+  net-aspen:
+services:
+
+  backend:
+    image: aspen-discovery/aspen
+    env_file:
+      - .env
+    ports:
+      - "80:80"
+    networks:
+      - net-aspen
+    tty: true
+    volumes:
+      - ${ASPEN_Repo}:/mnt
+      - ${ASPEN_Repo}/testminio.php:/testminio.php
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:10.3
+    restart: always
+    environment:
+      - MARIADB_ROOT_PASSWORD=${COMPOSE_RootPwd}
+    deploy:
+      endpoint_mode: dnsrr
+    volumes:
+      - ${ASPEN_Repo}/mariadb_data:/var/lib/mysql
+    networks:
+      - net-aspen
+
+  solr:
+    image: aspen-discovery/solr
+    env_file:
+      - .env
+    environment:
+      - SOLR_PORT=${SITE_solrPort}
+      - SOLR_HOST=${SITE_solrHost}
+    ports:
+      - "${SITE_solrPort}:${SITE_solrPort}"
+    deploy:
+      endpoint_mode: dnsrr
+    volumes:
+      - ${ASPEN_Repo}/solr_data:/var/solr
+    networks:
+      - net-aspen
+    depends_on:
+      - backend
+
+  tunnel:
+    image: aspen-discovery/tunnel
+    env_file:
+      - .env
+    deploy:
+      endpoint_mode: dnsrr
+    networks:
+      - net-aspen
+    depends_on:
+      - backend
