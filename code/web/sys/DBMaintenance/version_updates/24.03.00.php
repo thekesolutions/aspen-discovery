@@ -80,6 +80,22 @@ function getUpdates24_03_00(): array {
 
 
 		//lucas - Theke
+		'migrate_uploaded_files' => [
+			'title' => "Migrate uploaded files to store into database",
+			'description' => "Storage table for uploaded files",
+			'sql' => [
+				"CREATE TABLE uploaded_files (
+					id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+					filename VARCHAR(50) NOT NULL,
+					objectType VARCHAR(50) NOT NULL,
+					objectId INT(11) NOT NULL, 
+					propertyName VARCHAR(50) NOT NULL,
+					fileData LONGBLOB,
+					UNIQUE (objectType, objectId)
+				) ENGINE INNODB"
+			],
+		]
+
 
 		//alexander - PTFS Europe
 
