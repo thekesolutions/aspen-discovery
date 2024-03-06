@@ -19,10 +19,9 @@ services:
         platform: linux/x86_64
         tty: true
         environment:
-            XDEBUG_CONFIG: remote_host=host.docker.internal remote_port=9003 remote_enable=1
-        extra_hosts:
-            - "host.docker.internal:host-gateway" 
-
+          - WSL_IP
+        extra_hosts: 
+              - host.docker.internal:${WSL_IP:-host-gateway} 
   aspendb:
     container_name: aspen-db
     environment:

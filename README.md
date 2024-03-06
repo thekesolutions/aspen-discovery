@@ -90,4 +90,20 @@ Username: root
 Password: aspen
 Table: aspen
 ```
+### DEBUGGING:
+*IMPORTANT*
+if on WSL please also place this in your .bashrc (or equivalent) and restart your shell as above
+```
+export WSL_IP=$(ip addr show eth0 | awk '/inet / {print $2}' | cut -d/ -f1)
+```
+You should also sym link your aspen clone to the default install location for production installs so the debugger can link files. 
+Please open your IDE from this location if debugging.
+```
+sudo ln -s $ASPEN_CLONE /usr/local/aspen-discovery
+```
 
+An alternative to this is to setup path mappings in your debug configurations for your IDE. 
+VSCode mappings are included in the repository and can be copied to the correct location with the below command:
+```
+cp $ASPEN_DOCKER/vscodedebugconfig.json $ASPEN_CLONE/.vscode/launch.json
+```
