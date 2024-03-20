@@ -381,6 +381,33 @@ class DataObjectUtil {
 				}
 			}
 
+		} elseif ($property['type'] == 'db_image' || $property['property'] == 'fullSizePath') {
+			error_log("ENTRO A DB IMAGE");
+			if (isset($_FILES)){
+
+				$hasCorrectFormat = in_array($_FILES[$propertyName]["type"], [
+					'image/gif',
+					'image/jpeg',
+					'image/png',
+					'image/svg+xml',
+				]);
+
+				if ($hasCorrectFormat){
+					$logger->log("Processing uploaded file for $propertyName", Logger::LOG_DEBUG);
+					require_once ROOT_DIR . '/sys/File/ImageUpload.php';
+					$newImage = new ImageUpload();
+					$newImage->title = $_FILES[$propertyName]['name'];
+					error_log("TITLE : " . print_r($_FILES[$propertyName]['name'],true));
+					$newImage->fullSizePath = $_FILES[$propertyName]["name"];
+					$newImage->fullSizeImageData = file_get_contents($_FILES[$propertyName]['tmp_name']);
+					$newImage->generateXLargeSize = true;
+					$newImage->generateLargeSize = true;
+					$newImage->generateMediumSize = true;
+					$newImage->generateSmallSize = true;
+					$newImage->type = 'web_builder_image';
+					$newImage->insert();
+				}
+			}
 		} elseif ($property['type'] == 'file') {
 			//Make sure that the type is correct (jpg, png, or gif)
 			if (isset($_REQUEST["remove{$propertyName}"])) {

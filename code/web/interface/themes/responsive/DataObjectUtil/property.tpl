@@ -436,8 +436,8 @@
 			{if !empty($property.affectsLiDA)}<span id="{$propName}HelpBlock" class="help-block" style="margin-top:0"><small class="text-info"><i class="fas fa-info-circle"></i> {translate text="Aspen LiDA also uses this setting" isAdminFacing=true}</small></span>{/if}
 			{if !empty($property.note)}<span id="{$propName}HelpBlock" class="help-block" style="margin-top:0"><small><i class="fas fa-info-circle"></i> {$property.note}</small></span>{/if}
 
-		{elseif $property.type == 'image' || $property.type == 'file' || $property.type == 'db_file' }
-			{if !empty($propValue) && $property.type == 'image'}
+		{elseif $property.type == 'image' || $property.type == 'db_image' || $property.type == 'file' || $property.type == 'db_file' }
+			{if !empty($propValue) && ($property.type == 'image' || $property.type == 'db_image')}
 				{if !empty($property.thumbWidth)}
 					<img src='/files/thumbnail/{$propValue}' style="display: block" alt="Selected Image for {$property.label}">
 				{else}
@@ -451,7 +451,7 @@
 			<div class="input-group">
 				<label class="input-group-btn">
 					<span class="btn btn-primary">
-						{if $property.type == 'image'}
+						{if $property.type == 'image' || $property.type == 'db_image'}
 							{translate text="Select an image" isAdminFacing=true}&hellip; <input type="file" style="display: none;" name="{$propName}" id="{$propName}" {if !empty($property.required) && (empty($objectAction) || $objectAction != 'edit')}required="required"{/if} {if !empty($property.readOnly)}readonly disabled{/if}>
 						{else}
 							{translate text="Select a file" isAdminFacing=true}&hellip; <input type="file" style="display: none;" name="{$propName}" id="{$propName}" {if !empty($property.required) && (empty($objectAction) || $objectAction != 'edit')}required="required"{/if} {if !empty($property.readOnly)}readonly disabled{/if}>

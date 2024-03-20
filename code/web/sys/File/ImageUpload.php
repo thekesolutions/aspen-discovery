@@ -6,6 +6,7 @@ class ImageUpload extends DataObject {
 	public $id;
 	public $title;
 	public $fullSizePath; //Stores the original file maximum width of 1068px
+ 	public $fullSizeImageData;
 	public $generateXLargeSize;
 	public $xLargeSizePath; //Stores the thumbnail with a maximum size of 350px
 	public $generateLargeSize;
@@ -41,6 +42,7 @@ class ImageUpload extends DataObject {
 				'description' => 'The title of the image',
 				'size' => '40',
 				'maxLength' => 255,
+				'required' => true,
 			],
 			'type' => [
 				'property' => 'type',
@@ -51,7 +53,7 @@ class ImageUpload extends DataObject {
 			],
 			'fullSizePath' => [
 				'property' => 'fullSizePath',
-				'type' => 'image',
+				'type' => 'db_image',
 				'label' => 'Full Size Image',
 				'description' => 'The full size image (max width 1068px)',
 				'maxWidth' => 1068,
@@ -70,7 +72,7 @@ class ImageUpload extends DataObject {
 			],
 			'xLargeSizePath' => [
 				'property' => 'xLargeSizePath',
-				'type' => 'image',
+				'type' => 'db_image',
 				'label' => 'X-Large Size Image',
 				'description' => 'The x-large size image (max width 1100 px)',
 				'maxWidth' => ImageUpload::$xLargeSize,
@@ -88,7 +90,7 @@ class ImageUpload extends DataObject {
 			],
 			'largeSizePath' => [
 				'property' => 'largeSizePath',
-				'type' => 'image',
+				'type' => 'db_image',
 				'label' => 'Large Size Image',
 				'description' => 'The medium size image (max width 600px)',
 				'maxWidth' => ImageUpload::$largeSize,
@@ -106,7 +108,7 @@ class ImageUpload extends DataObject {
 			],
 			'mediumSizePath' => [
 				'property' => 'mediumSizePath',
-				'type' => 'image',
+				'type' => 'db_image',
 				'label' => 'Medium Size Image',
 				'description' => 'The medium size image (max width 400px)',
 				'maxWidth' => ImageUpload::$mediumSize,
@@ -124,7 +126,7 @@ class ImageUpload extends DataObject {
 			],
 			'smallSizePath' => [
 				'property' => 'smallSizePath',
-				'type' => 'image',
+				'type' => 'db_image',
 				'label' => 'Small Size Image',
 				'description' => 'The small size image (max width 200px)',
 				'maxWidth' => ImageUpload::$smallSize,
@@ -154,12 +156,13 @@ class ImageUpload extends DataObject {
 	}
 
 	function insert($context = '') {
-		$this->generateDerivatives();
+		$this->generateDerivatives2();
+		error_log("ENTRO A INSERT");
 		return parent::insert();
 	}
 
 	function update($context = '') {
-		$this->generateDerivatives();
+		$this->generateDerivatives2();
 		return parent::update();
 	}
 
@@ -206,6 +209,64 @@ class ImageUpload extends DataObject {
 				$smallFile .= $this->fullSizePath;
 				if (resizeImage($fullSizeFile, $smallFile, ImageUpload::$smallSize, ImageUpload::$smallSize)) {
 					$this->smallSizePath = $this->fullSizePath;
+				}
+			}
+		}
+	}
+
+	private function generateDerivatives2(){
+		if ($this->type == 'web_builder_image') {
+			$isWrote = 0;
+			if (isset($this->fullSizeImageData)) {
+				//Create tmp file where will be store the blob temporarily
+				$tmpDir = $this->tempdir();
+				$tmpFullPath = $tmpDir . '/' . $this->getFormatTitle($this->title);
+				//Store the blob into the tmp file
+				$isWrote = file_put_contents($tmpFullPath, $this->fullSizeImageData);
+				error_log("IS WROTE : " . print_r($isWrote,true));
+			}
+			if ($isWrote > 0) {
+				require_once ROOT_DIR . '/sys/Covers/CoverImageUtils.php';
+
+				if ($this->generateXLargeSize && empty($this->xLargeSizePath)) {
+					$xLargeFile = self::getObjectStructure()['xLargeSizePath']['path'];
+					if (!file_exists($xLargeFile)) {
+						mkdir($xLargeFile, 0755, true);
+					}
+					$xLargeFile .= $this->getFormatTitle($this->title);
+					if (resizeImage($tmpFullPath, $xLargeFile, ImageUpload::$xLargeSize, ImageUpload::$xLargeSize)) {
+						$this->xLargeSizePath = $this->getFormatTitle($this->title);
+					}
+				}
+				if ($this->generateLargeSize && empty($this->largeSizePath)) {
+					$largeFile = self::getObjectStructure()['largeSizePath']['path'];
+					if (!file_exists($largeFile)) {
+						mkdir($largeFile, 0755, true);
+					}
+					$largeFile .= $this->getFormatTitle($this->title);
+					if (resizeImage($tmpFullPath, $largeFile, ImageUpload::$largeSize, ImageUpload::$largeSize)) {
+						$this->largeSizePath = $this->getFormatTitle($this->title);
+					}
+				}
+				if ($this->generateMediumSize && empty($this->mediumSizePath)) {
+					$mediumFile = self::getObjectStructure()['mediumSizePath']['path'];
+					if (!file_exists($mediumFile)) {
+						mkdir($mediumFile, 0755, true);
+					}
+					$mediumFile .= $this->getFormatTitle($this->title);
+					if (resizeImage($tmpFullPath, $mediumFile, ImageUpload::$mediumSize, ImageUpload::$mediumSize)) {
+						$this->mediumSizePath = $this->getFormatTitle($this->title);
+					}
+				}
+				if ($this->generateSmallSize && empty($this->smallSizePath)) {
+					$smallFile = self::getObjectStructure()['smallSizePath']['path'];
+					if (!file_exists($smallFile)) {
+						mkdir($smallFile, 0755, true);
+					}
+					$smallFile .= $this->getFormatTitle($this->title);
+					if (resizeImage($tmpFullPath, $smallFile, ImageUpload::$smallSize, ImageUpload::$smallSize)) {
+						$this->smallSizePath = $this->getFormatTitle($this->title);
+					}
 				}
 			}
 		}

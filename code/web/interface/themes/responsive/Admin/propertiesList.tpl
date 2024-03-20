@@ -154,7 +154,7 @@
 									{/if}
 								{elseif $property.type == 'checkbox'}
 									{if ($propValue == 1)}{translate text="Yes" isAdminFacing=true}{elseif ($propValue == 0)}{translate text="No" isAdminFacing=true}{else}{$propValue}{/if}
-								{elseif $property.type == 'image'}
+								{elseif $property.type == 'image' || $property.type == 'db_image'}
 									<img src="{$property.displayUrl}{$dataItem->id}" class="img-responsive" alt="{$propName}">
 								{elseif $property.type == 'textarea'}
 									{$propValue|truncate:255:'...'}
