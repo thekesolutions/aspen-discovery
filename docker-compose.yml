@@ -17,9 +17,8 @@ services:
     tty: true
     platform: linux/x86_64
     depends_on:
-      - aspendb
-    links: 
-      - aspendb
+      aspendb:
+        condition: service_healthy
     environment:
       - WSL_IP
     extra_hosts: 
@@ -39,9 +38,16 @@ services:
       - $ASPEN_DOCKER/my.cnf:/etc/mysql/conf.d/my.cnf
 
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-paspen", "-h", "localhost"]
-      timeout: 20s
+      interval: 30s
       retries: 10
+      test:
+        [
+          "CMD",
+          "healthcheck.sh",
+          "--su-mysql",
+          "--connect",
+          "--innodb_initialized"
+        ]
     networks:
       - koha_kohanet
     platform: linux/x86_64
