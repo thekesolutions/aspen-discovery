@@ -56,6 +56,7 @@ RUN apt -y update \
   php8.0-xml \
   php8.0-intl \
   php8.0-mbstring \
+  php8.0-xdebug \
   lsof \
   && rm -rf /var/cache/apt/archives/* \
   && rm -rf /var/lib/apt/lists/*
