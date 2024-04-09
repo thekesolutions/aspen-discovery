@@ -24,6 +24,8 @@ service apache2 start;
 
 su -c "/usr/local/aspen-discovery/sites/test.localhostaspen/test.localhostaspen.sh start" aspen;
 
+curl -k http://localhost/API/SystemAPI?method=runPendingDatabaseUpdates
+
 crontab /etc/cron.d/cron
 
 exec "$@"

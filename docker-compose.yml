@@ -16,6 +16,14 @@ services:
       - koha_kohanet
     tty: true
     platform: linux/x86_64
+    depends_on:
+      - aspendb
+    links: 
+      - aspendb
+    environment:
+      - WSL_IP
+    extra_hosts: 
+      - host.docker.internal:${WSL_IP:-host-gateway} 
 
   aspendb:
     container_name: aspen-db
