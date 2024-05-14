@@ -62,13 +62,13 @@ RUN apt -y update \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Adding entrypoint file
-COPY docker/start.sh /start.sh
+COPY aspen-discovery/docker/start.sh /start.sh
 
 # Load apache modules
 RUN a2enmod rewrite
 
 # Add aspen-discovery
-COPY . /usr/local/aspen-discovery
+COPY aspen-discovery /usr/local/aspen-discovery
 
 # Delete sites
 RUN cd /usr/local/aspen-discovery/sites \
@@ -77,16 +77,4 @@ RUN cd /usr/local/aspen-discovery/sites \
 	&& rm -rf *dev*   \
 	&& rm -rf template.windows
 
-# Create temp smarty directories
-RUN cd /usr/local/aspen-discovery \
-	&& mkdir tmp \
-	&& chown -R www-data:www-data tmp \
-	&& chmod -R 755 tmp
-
-# Create users
-RUN cd /usr/local/aspen-discovery/install \
-	&& sed -i 's/adduser/useradd/g' setup_aspen_user_debian.sh \
-	&& mkdir -p /var/log/aspen-discovery \
-	&& bash /usr/local/aspen-discovery/install/setup_aspen_user_debian.sh
-
-ENTRYPOINT ["/start.sh"]
+CMD ["/start.sh"]
