@@ -22,18 +22,17 @@ services:
   aspendb:
     container_name: aspen-db
     environment:
-      - MYSQL_ROOT_PASSWORD=aspen
-      - MYSQL_DATABASE:aspen
-      - MYSQL_USER:aspensuper
-      - MYSQL_PASSWORD:aspensuper
-      - MYSQL_TCP_PORT:7000
+      - MARIADB_ROOT_PASSWORD=aspen
+      - MARIADB_DATABASE=aspen
+      - MARIADB_USER=aspensuper
+      - MARIADB_PASSWORD=aspensuper
     image: "mariadb"
     volumes:
-      - $ASPEN_DOCKER/setup.sql:/docker-entrypoint-initdb.d/init-script.sql
-      - $ASPEN_DOCKER/my.cnf:/etc/mysql/conf.d/my.cnf
+      - $ASPEN_CLONE/install/aspen.sql:/docker-entrypoint-initdb.d/Aspen-db-startup.sql
+      - $ASPEN_DOCKER/database_start_scripts/ktd/account_profile.sql:/docker-entrypoint-initdb.d/zzz-init_account_profile.sql
 
     healthcheck:
-      interval: 30s
+      interval: 60s
       retries: 10
       test:
         [
