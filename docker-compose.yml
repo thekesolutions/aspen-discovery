@@ -1,7 +1,8 @@
 services:
   aspen-dev-box:
-    image: registry.gitlab.com/aspen-discovery/aspen-dev-box-image/aspen-dev-box:main
+    image: aspendiscovery/aspen
     volumes:
+      - "$ASPEN_DOCKER/dockerrun.sh:/start.sh"
       - "$ASPEN_CLONE:/usr/local/aspen-discovery"
       - "$ASPEN_DOCKER/site/:/usr/local/aspen-discovery/sites/test.localhostaspen"
       - "$ASPEN_DOCKER/etc/apache2/sites-enabled:/etc/apache2/sites-enabled"
