@@ -22,10 +22,8 @@ chown -R aspen /data/aspen-discovery/test.localhostaspen/solr7;
 
 service apache2 start;
 
-su -c "/usr/local/aspen-discovery/sites/test.localhostaspen/test.localhostaspen.sh start" aspen;
-
 curl -k http://localhost/API/SystemAPI?method=runPendingDatabaseUpdates
 
 crontab /etc/cron.d/cron
 
-exec "$@"
+/bin/bash -c "trap : TERM INT; sleep infinity & wait"

@@ -9,7 +9,6 @@ services:
       - "$ASPEN_DOCKER/site/conf/crontab_settings.txt:/etc/cron.d/cron"
       - "$ASPEN_DOCKER/aliases:/root/.bashrc"
     ports:
-      - "8084:8080"
       - "8083:80"
     container_name: containeraspen
     networks:
@@ -47,6 +46,20 @@ services:
     networks:
       - koha_kohanet
     platform: linux/x86_64
+    
+  solr:
+    image: aspendiscovery/solr
+    environment:
+      - SOLR_PORT=8084
+      - SOLR_HOST=solr
+    ports:
+      - "8084:8084"
+    deploy:
+      endpoint_mode: dnsrr
+    networks:
+      - koha_kohanet
+    depends_on:
+      - aspen-dev-box
 
 networks:
   koha_kohanet:
