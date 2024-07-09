@@ -16,10 +16,10 @@ services:
     platform: linux/x86_64
     tty: true
     depends_on:
-      aspendb:
+      aspen-db:
         condition: service_healthy
 
-  aspendb:
+  aspen-db:
     container_name: aspen-db
     environment:
       - MARIADB_ROOT_PASSWORD=aspen
