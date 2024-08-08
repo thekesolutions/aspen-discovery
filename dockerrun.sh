@@ -6,6 +6,8 @@
 
 service cron start
 
+./usr/local/aspen-discovery/install/setup_aspen_user_debian.sh
+
 mkdir -p /data/aspen-discovery/test.localhostaspen/covers/{small,large,medium,original}
 
 mkdir -p /usr/local/aspen-discovery/tmp/smarty/compile/
