@@ -1,9 +1,9 @@
 <?php
 
-//Capture any error as ErrorException
+// Capture any error as ErrorException
 set_error_handler("customErrorHandler");
 
-//Check how many arguments has been passed to the script
+// Check how many arguments has been passed to the script
 if (count($argv) == 1) {
     $newOwner = "www-data";
     echo "Owner : $newOwner\n";
@@ -22,7 +22,7 @@ echo "Site name = $siteName\n";
 $configDir = getenv('CONFIG_DIRECTORY');
 echo "Config directory = $configDir\n";
 
-//Check if passed user is valid
+// Check if passed user is valid
 exec("id $newOwner", $output, $exitCode);
 if ($exitCode !== 0) {
     echo "The user doesn't exist\n ";
@@ -34,7 +34,7 @@ echo "Setting up data and log directories...\n";
 $aspenDir = '/usr/local/aspen-discovery';
 
 try {
-    //Create temp smarty directory
+    // Create temp smarty directory
     $tmpDir = "$aspenDir/tmp";
     if (!file_exists($tmpDir)) {
         exec("mkdir -p $tmpDir");
@@ -42,7 +42,7 @@ try {
         exec("chmod -R 755 $tmpDir");
     }
 
-    //Create data directory and sub-directories
+    // Create data directory and sub-directories
     $dataDir = "/data/aspen-discovery/$siteName";
     if (!file_exists($dataDir)) {
         exec("mkdir -p $dataDir");
@@ -63,7 +63,7 @@ try {
         exec("chown -R $newOwner /data/aspen-discovery/accelerated_reader");
     }
 
-    //Copy just necessary directories
+    // Copy just necessary directories
     recursive_copy("$aspenDir/data_dir_setup/", $dataDir);
     $toDelete = [
         'solr7',
@@ -88,16 +88,16 @@ try {
 }
 
 try {
-    //Assign owners and permissions
+    // Assign owners and permissions
 
-    //Aspen directory
+    // Aspen directory
     exec("chown -R $newOwner $aspenDir");
     exec("chown -R www-data $aspenDir/tmp");
     exec("chown -R www-data $aspenDir/code/web");
     exec("chown -R www-data $aspenDir/sites");
     exec("chown -R www-data $aspenDir/sites/default");
 
-    //Data directory
+    // Data directory
     exec("chmod -R 755 $dataDir");
     exec("chown -R $newOwner $dataDir");
 
@@ -109,36 +109,38 @@ try {
 
     exec("chown -R root:root $dataDir/sql_backup");
 
-    //Files directory
+    // Files directory
     exec("chmod -R 755 $aspenDir/code/web/files");
     exec("chown -R $newOwner $aspenDir/code/web/files");
 
-    //Fonts directory
+    // Fonts directory
     exec("chmod -R 755 $aspenDir/code/web/fonts");
     exec("chown -R $newOwner $aspenDir/code/web/fonts");
 
-    //Images directory
+    // Images directory
     exec("chmod -R 755 $aspenDir/code/web/images");
     exec("chown -R $newOwner $aspenDir/code/web/images");
 
 
-    //Logs directory
+    // Logs directory
     $logDir = "/var/log/aspen-discovery/$siteName";
     if (!file_exists($logDir)) {
         exec("mkdir -p $logDir");
+        exec("chown $newOwner $logDir");
         exec("chmod -R 755 $logDir");
     }
 
     $logDir2 = "/var/log/aspen-discovery/$siteName/logs";
     if (!file_exists($logDir2)) {
         exec("mkdir -p $logDir2");
+        exec("chown $newOwner $logDir2");
         exec("chmod -R 755 $logDir2");
     }
 
     exec("chown $newOwner $logDir/*");
     exec("chown -R $newOwner $logDir/logs");
 
-    //Conf directory
+    // Conf directory
     exec("chmod -R 755 $configDir/conf");
     exec("chown $newOwner $configDir/conf");
     exec("chown $newOwner $configDir/conf/config*");
@@ -153,7 +155,7 @@ try {
         exec("chown $newOwner $configDir/conf/passkey");
     }
 
-    //Copy the httpd conf file
+    // Copy the httpd conf file
     $apacheDir = "/etc/apache2";
     copy("$configDir/httpd-$siteName.conf", "$apacheDir/sites-enabled/httpd-$siteName.conf");
 } catch (ErrorException $e) {

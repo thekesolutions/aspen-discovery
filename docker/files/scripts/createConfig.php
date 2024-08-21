@@ -27,6 +27,7 @@ $variables = [
     //ASPEN
     'sitename' => getenv('SITE_NAME'),
     'servername' => preg_replace('~https?://~', '', getenv('URL')),
+    'supportingCompany' => getenv('SUPPORTING COMPANY') ?? 'ByWater Solutions',
     'library' => getenv('LIBRARY'),
     'title' => getenv('TITLE'),
     'url' => getenv('URL'),

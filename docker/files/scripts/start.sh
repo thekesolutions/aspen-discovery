@@ -62,8 +62,8 @@ curl -k http://"$SITE_NAME"/API/SystemAPI?method=runPendingDatabaseUpdates
 
 # Start Cron
 if [ "$ASPEN_CRON" == "yes" ]; then
-	service cron start
 	php /usr/local/aspen-discovery/code/web/cron/checkBackgroundProcesses.php "$SITE_NAME" &
+	cron -f -L 2
 fi
 
 # Infinite loop
