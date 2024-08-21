@@ -126,19 +126,16 @@ try {
     $logDir = "/var/log/aspen-discovery/$siteName";
     if (!file_exists($logDir)) {
         exec("mkdir -p $logDir");
-        exec("chown $newOwner $logDir");
+        exec("chown -R $newOwner $logDir");
         exec("chmod -R 755 $logDir");
     }
 
     $logDir2 = "/var/log/aspen-discovery/$siteName/logs";
     if (!file_exists($logDir2)) {
         exec("mkdir -p $logDir2");
-        exec("chown $newOwner $logDir2");
+        exec("chown -R $newOwner $logDir2");
         exec("chmod -R 755 $logDir2");
     }
-
-    exec("chown $newOwner $logDir/*");
-    exec("chown -R $newOwner $logDir/logs");
 
     // Conf directory
     exec("chmod -R 755 $configDir/conf");
