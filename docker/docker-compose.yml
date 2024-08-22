@@ -18,7 +18,7 @@ services:
     volumes:
       - ${ASPEN_DATA_DIR}/conf:/usr/local/aspen-discovery/sites/${SITE_NAME}
       - ${ASPEN_DATA_DIR}/data:/data/aspen-discovery/${SITE_NAME}
-      - ${ASPEN_DATA_DIR}/logs:/var/log/aspen-discovery
+      - ${ASPEN_DATA_DIR}/logs:/var/log/aspen-discovery/${SITE_NAME}
     depends_on:
       db:
         condition: service_healthy
@@ -35,10 +35,10 @@ services:
     volumes:
       - ${ASPEN_DATA_DIR}/conf:/usr/local/aspen-discovery/sites/${SITE_NAME}
       - ${ASPEN_DATA_DIR}/data:/data/aspen-discovery/${SITE_NAME}
-      - ${ASPEN_DATA_DIR}/logs:/var/log/aspen-discovery
+      - ${ASPEN_DATA_DIR}/logs:/var/log/aspen-discovery/${SITE_NAME}
+      - ${ASPEN_DATA_DIR}/cron.d:/etc/cron.d
     depends_on:
       - backend
-    entrypoint: cron -f -L 2
 
   db:
     image: ${MARIADB_IMAGE:-mariadb:10.5}

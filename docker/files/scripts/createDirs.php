@@ -109,36 +109,35 @@ try {
 
     exec("chown -R root:root $dataDir/sql_backup");
 
-    //Files directory
+    // Files directory
     exec("chmod -R 755 $aspenDir/code/web/files");
     exec("chown -R $newOwner $aspenDir/code/web/files");
 
-    //Fonts directory
+    // Fonts directory
     exec("chmod -R 755 $aspenDir/code/web/fonts");
     exec("chown -R $newOwner $aspenDir/code/web/fonts");
 
-    //Images directory
+    // Images directory
     exec("chmod -R 755 $aspenDir/code/web/images");
     exec("chown -R $newOwner $aspenDir/code/web/images");
 
 
-    //Logs directory
+    // Logs directory
     $logDir = "/var/log/aspen-discovery/$siteName";
     if (!file_exists($logDir)) {
         exec("mkdir -p $logDir");
-        exec("chmod -R 755 $logDir");
     }
+    exec("chmod -R 755 $logDir");
+    exec("chown -R $newOwner $logDir");
 
     $logDir2 = "/var/log/aspen-discovery/$siteName/logs";
     if (!file_exists($logDir2)) {
         exec("mkdir -p $logDir2");
-        exec("chmod -R 755 $logDir2");
     }
+    exec("chmod -R 755 $logDir2");
+    exec("chown -R $newOwner $logDir2");
 
-    exec("chown $newOwner $logDir/*");
-    exec("chown -R $newOwner $logDir/logs");
-
-    //Conf directory
+    // Conf directory
     exec("chmod -R 755 $configDir/conf");
     exec("chown $newOwner $configDir/conf");
     exec("chown $newOwner $configDir/conf/config*");

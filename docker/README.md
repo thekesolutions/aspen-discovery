@@ -22,14 +22,15 @@ source ~/.bashrc
 mkdir -p ${ASPEN_DATA_DIR}/database \
          ${ASPEN_DATA_DIR}/conf \
          ${ASPEN_DATA_DIR}/data \
-         ${ASPEN_DATA_DIR}/logs
+         ${ASPEN_DATA_DIR}/logs \
+         ${ASPEN_DATA_DIR}/cron.d
 ```
 
 ### 3.0) Copy docker-compose.yml and .env
 
 ```
-curl -O ${ASPEN_DATA_DIR}/docker-compose.yml https://raw.githubusercontent.com/Aspen-Discovery/aspen-discovery/24.08.00/docker/docker-compose.yml
-curl -O ${ASPEN_DATA_DIR}/.env https://raw.githubusercontent.com/Aspen-Discovery/aspen-discovery/24.08.00/docker/env/default.env
+curl -O ${ASPEN_DATA_DIR}/docker-compose.yml https://raw.githubusercontent.com/Aspen-Discovery/aspen-discovery/24.09.00/docker/docker-compose.yml
+curl -O ${ASPEN_DATA_DIR}/.env https://raw.githubusercontent.com/Aspen-Discovery/aspen-discovery/24.09.00/docker/env/default.env
 ```
  
 ### 4) Create and start containers
