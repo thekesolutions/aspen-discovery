@@ -83,6 +83,7 @@ if ($emptyVariables > 0) {
 
 $templateDir = "/usr/local/aspen-discovery/sites/template.linux";
 $defaultDir = "/usr/local/aspen-discovery/sites/default";
+$dockerDir = "/usr/local/aspen-discovery/docker";
 
 if (!file_exists($templateDir)) {
 	echo "ERROR: The template directory '" . $templateDir . "' does not exists.\n";
@@ -106,7 +107,11 @@ try {
 	replaceVariables($siteDir . '/conf/config.ini', $variables);
 	replaceVariables($siteDir . '/conf/config.cron.ini', $variables);
 	replaceVariables($siteDir . '/conf/config.pwd.ini', $variables);
-	replaceVariables($siteDir . "/conf/crontab_settings.txt", $variables);
+	
+
+//Copy from docker directory and replace variables
+	copy($dockerDir . "/files/cron/crontab", $siteDir . "/conf" );
+	replaceVariables($dockerDir . "/files/cron/crontab", $variables);
 
 //Copy from default site directory
 	copy($defaultDir . "/conf/badBotsLocal.conf", $siteDir . "/conf/badBotsLocal.conf");
