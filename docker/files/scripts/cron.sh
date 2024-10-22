@@ -12,7 +12,14 @@ fi
 
 # Move and create temporarily sym-links to etc/cron directory
 sanitizedSitename=$(echo "$SITE_NAME" | tr -dc '[:alnum:]_')
-cp "$CONFIG_DIRECTORY/conf/crontab_settings.txt" "/etc/cron.d/$sanitizedSitename"
+#cp "$CONFIG_DIRECTORY/conf/crontab_settings.txt" "/etc/cron.d/$sanitizedSitename"
+cp "$CONFIG_DIRECTORY/conf/crontab" "/etc/cron.d/$sanitizedSitename"
+chmod 644 "/etc/cron.d/$sanitizedSitename"
 
-php /usr/local/aspen-discovery/code/web/cron/checkBackgroundProcesses.php "${SITE_NAME}" &
+# Adjust permissions if required
+if [[ ! -z "${LOCAL_USER_ID}" && "${LOCAL_USER_ID}" != "33" ]]; then
+    sudo -u ${LOCAL_USER_ID} php /usr/local/aspen-discovery/code/web/cron/checkBGProcessesDocker.php "${SITE_NAME}" &
+fi
+
+crontab "/etc/cron.d/$sanitizedSitename"
 cron -f -L 2
