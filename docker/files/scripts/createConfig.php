@@ -110,7 +110,7 @@ try {
 	
 
 //Copy from docker directory and replace variables
-	copy($dockerDir . "/files/cron/crontab", $siteDir . "/conf" );
+	copy($dockerDir . "/files/cron/crontab", $siteDir . "/conf/crontab" );
 	replaceVariables($siteDir . "/conf/crontab", $variables);
 
 //Copy from default site directory
