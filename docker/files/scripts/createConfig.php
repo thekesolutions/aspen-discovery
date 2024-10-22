@@ -111,7 +111,7 @@ try {
 
 //Copy from docker directory and replace variables
 	copy($dockerDir . "/files/cron/crontab", $siteDir . "/conf" );
-	replaceVariables($dockerDir . "/files/cron/crontab", $variables);
+	replaceVariables($siteDir . "/conf/crontab", $variables);
 
 //Copy from default site directory
 	copy($defaultDir . "/conf/badBotsLocal.conf", $siteDir . "/conf/badBotsLocal.conf");
