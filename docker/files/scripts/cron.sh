@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 export CONFIG_DIRECTORY="/usr/local/aspen-discovery/sites/${SITE_NAME}"
 
@@ -21,5 +21,5 @@ if [[ ! -z "${LOCAL_USER_ID}" && "${LOCAL_USER_ID}" != "33" ]]; then
     sudo -u ${LOCAL_USER_ID} php /usr/local/aspen-discovery/code/web/cron/checkBGProcessesDocker.php "${SITE_NAME}" &
 fi
 
-crontab "/etc/cron.d/$sanitizedSitename"
+crontab /etc/cron.d/$sanitizedSitename
 cron -f -L 2
