@@ -134,8 +134,8 @@ try {
     exec("chown $newOwner $configDir/conf");
     exec("chown $newOwner $configDir/conf/config*");
     exec("chown root:root $configDir/httpd-$siteName.conf");
-    exec("chown root:root $configDir/conf/crontab_settings.txt");
-    exec("chmod 0644 $configDir/conf/crontab_settings.txt");
+    exec("chown root:root $configDir/conf/crontab");
+    exec("chmod 0644 $configDir/conf/crontab");
 
     if (file_exists("$configDir/conf/log4j")) {
         exec("chown $newOwner $configDir/conf/log4j*");
