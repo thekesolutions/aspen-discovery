@@ -1,0 +1,65 @@
+{
+    "baseDir": {
+        "owner": "www-data",
+        "permissions": "755",
+        "tmp": {
+            "owner": "www-data",
+            "permissions": "755"
+        }
+
+    },
+    "configDir": {
+        "owner": "www-data",
+        "permissions": "755",
+        "conf": {
+            "owner": "www-data",
+            "permissions": "755"
+        }
+    },
+    "dataDir": {
+        "owner": "www-data",
+        "permissions": "755",
+        "images": {
+            "owner": "www-data",
+            "permissions": "755"
+        },
+        "files": {
+            "owner": "www-data",
+            "permissions": "755"
+        },
+        "fonts": {
+            "owner": "www-data",
+            "permissions": "755"
+        },
+        "accelerated_reader": {
+            "owner": "www-data",
+            "permissions": "755"
+        },
+        "covers": {
+            "owner": "www-data",
+            "permissions": "755"
+        },
+        "ils": {
+            "owner": "www-data",
+            "permissions": "755"
+        },
+        "sideload_data_dir_template": {
+            "owner": "www-data",
+            "permissions": "755"
+        },
+        "uploads": {
+            "owner": "www-data",
+            "permissions": "755"
+        }
+    },
+    "logsDir": {
+        "owner": "www-data",
+        "permissions": "755",
+        "logs": {
+            "owner": "www-data",
+            "permissions": "755"
+        }
+
+    }
+    
+}

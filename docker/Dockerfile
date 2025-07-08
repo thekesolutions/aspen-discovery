@@ -80,6 +80,7 @@ COPY docker/files/scripts/start.sh       /start.sh
 COPY docker/files/scripts/cron.sh        /cron.sh
 COPY docker/files/scripts/apache.sh      /apache.sh
 
+
 # Add aspen-discovery
 COPY . /usr/local/aspen-discovery
 
@@ -91,4 +92,4 @@ RUN cd /usr/local/aspen-discovery/sites \
 	&& rm -rf template.windows
 
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["php", "/usr/local/aspen-discovery/docker2/entrypoint.php"]
