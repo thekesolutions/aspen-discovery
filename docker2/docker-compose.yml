@@ -1,0 +1,141 @@
+version: '3.8'
+
+networks:
+  net-aspen:
+
+services:
+  # Database
+  db:
+    image: mariadb:10.11
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - MARIADB_ROOT_PASSWORD=${DATABASE_ROOT_PASSWORD:-password}
+      - MARIADB_USER=${DATABASE_USER:-aspenusr}
+      - MARIADB_PASSWORD=${DATABASE_PASSWORD:-aspenpasswd}
+      - MARIADB_DATABASE=${DATABASE_NAME:-aspen}
+    volumes:
+      - ${ASPEN_DATA_DIR}/database:/var/lib/mysql
+      - ${ASPEN_DATA_DIR}/my.cnf:/etc/mysql/my.cnf
+    networks:
+      - net-aspen
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Solr Search Engine
+  solr:
+    image: solr:9
+    environment:
+      - SOLR_HEAP=1g
+    volumes:
+      - ${ASPEN_DATA_DIR}/solr:/var/solr
+    networks:
+      - net-aspen
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8983/solr/admin/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Database Initialization (runs once)
+  init-db:
+    image: aspen-discovery:latest
+    command: php /docker2/init.php database
+    environment:
+      - INIT_MODE=database
+    env_file:
+      - .env
+    networks:
+      - net-aspen
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  # Application Initialization (runs once)
+  init-app:
+    image: aspen-discovery:latest
+    command: php /docker2/init.php application
+    environment:
+      - INIT_MODE=application
+    env_file:
+      - .env
+    networks:
+      - net-aspen
+    depends_on:
+      - init-db
+    volumes:
+      - ${ASPEN_DATA_DIR}/conf:/usr/local/aspen-discovery/sites/${SITE_NAME}
+      - ${ASPEN_DATA_DIR}/data:/data/aspen-discovery/${SITE_NAME}
+      - ${ASPEN_DATA_DIR}/logs:/var/log/aspen-discovery/${SITE_NAME}
+    restart: "no"
+
+  # Backend PHP-FPM Service
+  backend:
+    image: aspen-discovery:latest
+    command: php /docker2/entrypoint.php backend
+    env_file:
+      - .env
+    networks:
+      - net-aspen
+    depends_on:
+      - init-app
+      - solr
+    volumes:
+      - ${ASPEN_DATA_DIR}/conf:/usr/local/aspen-discovery/sites/${SITE_NAME}
+      - ${ASPEN_DATA_DIR}/data:/data/aspen-discovery/${SITE_NAME}
+      - ${ASPEN_DATA_DIR}/logs:/var/log/aspen-discovery/${SITE_NAME}
+    healthcheck:
+      test: ["CMD", "php-fpm8.4", "--test"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  # Apache Web Server
+  apache:
+    image: aspen-discovery:latest
+    command: php /docker2/entrypoint.php apache
+    env_file:
+      - .env
+    networks:
+      - net-aspen
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${ASPEN_DATA_DIR}/conf:/usr/local/aspen-discovery/sites/${SITE_NAME}
+      - ${ASPEN_DATA_DIR}/data:/data/aspen-discovery/${SITE_NAME}
+      - ${ASPEN_DATA_DIR}/logs:/var/log/aspen-discovery/${SITE_NAME}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Cron Jobs Service
+  cron:
+    image: aspen-discovery:latest
+    command: php /docker2/entrypoint.php cron
+    env_file:
+      - .env
+    networks:
+      - net-aspen
+    depends_on:
+      - backend
+    volumes:
+      - ${ASPEN_DATA_DIR}/conf:/usr/local/aspen-discovery/sites/${SITE_NAME}
+      - ${ASPEN_DATA_DIR}/data:/data/aspen-discovery/${SITE_NAME}
+      - ${ASPEN_DATA_DIR}/logs:/var/log/aspen-discovery/${SITE_NAME}
+    restart: unless-stopped

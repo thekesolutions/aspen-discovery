@@ -92,4 +92,4 @@ RUN cd /usr/local/aspen-discovery/sites \
 	&& rm -rf template.windows
 
 
-ENTRYPOINT ["php", "/usr/local/aspen-discovery/docker2/entrypoint.php"]
+CMD ["php", "/usr/local/aspen-discovery/docker2/entrypoint.php"]

@@ -1,12 +1,11 @@
 <?php
 
 /**
- * Aspen Discovery Service Entrypoint
+ * Aspen Discovery Service Entrypoint (Production)
  * 
- * Main entrypoint that initializes and runs specific services based on command parameter
+ * Loads and runs services using the existing Service class pattern
+ * Initialization is handled separately by init containers
  */
-
-
 
 // Include the Service base class
 require_once __DIR__ . '/Service.php';
@@ -17,39 +16,38 @@ require_once __DIR__ . '/Service.php';
 try {
     logMessage("Aspen Discovery Service Entrypoint started");
     
-    // Get command from arguments (this matches docker-compose command)
-    $command = $argv[1] ?? null;
+    // Get service name from arguments
+    $service = $argv[1] ?? null;
     
-    if (!$command) {
-        logMessage("No service command provided", 'ERROR');
-        echo "Usage: php entrypoint.php <service_name> [<owner>]\n";
+    if (!$service) {
+        logMessage("No service specified", 'ERROR');
+        echo "Usage: php entrypoint.php <service>\n";
         echo "Available services: apache, backend, cron\n";
         exit(1);
     }
     
-    logMessage("Initializing service: {$command}");
+    logMessage("Starting service: {$service}");
     
-    // Load service class based on command name
-    if (!loadServiceClass($command)) {
+    // Load service class based on service name
+    if (!loadServiceClass($service)) {
         exit(1);
     }
     
-    // Create service class name (e.g., 'apache' -> 'Apache')
-    $serviceClassName = ucfirst($command);
+    // Create service class name (e.g., 'backend' -> 'Backend')
+    $serviceClassName = ucfirst($service);
     
     logMessage("Loading service class: {$serviceClassName}");
     
     // Create service instance
-    $service = new $serviceClassName($command);
+    $serviceInstance = new $serviceClassName($service);
     
-    logMessage("Service instance created: {$command}");
+    logMessage("Service instance created: {$service}");
     logMessage("Starting service execution...");
     
-    // Run the service (this will handle configure -> ready -> start)
-    // The service itself will check if files exist to avoid overwriting
-    $service->run();
+    // Run the service (this will handle dependencies -> runtime -> start)
+    $serviceInstance->run();
     
-    logMessage("Service completed successfully: {$command}");
+    logMessage("Service completed successfully: {$service}");
     
 } catch (ServiceException $e) {
     logMessage("Service exception: " . $e->getMessage(), 'ERROR');
@@ -61,27 +59,6 @@ try {
     logMessage("Unexpected error: " . $e->getMessage(), 'ERROR');
     logMessage("File: " . $e->getFile() . " Line: " . $e->getLine(), 'ERROR');
     exit(1);
-    
-} catch (Error $e) {
-    logMessage("Fatal error: " . $e->getMessage(), 'ERROR');
-    logMessage("File: " . $e->getFile() . " Line: " . $e->getLine(), 'ERROR');
-    exit(1);
-}
-
-
-/**
- * Log function for entrypoint - only stdout for Docker
- */
-function logMessage(string $message, string $level = 'INFO'): void {
-    $timestamp = date('Y-m-d H:i:s');
-
-    $level = $level == 'INFO' ? "\033[38;5;117mINFO\033[0m" : $level;
-    $level = $level == 'ERROR' ? "\033[31mERROR\033[0m" : $level;
-
-    $logMessage = "[{$timestamp}] [{$level}] [ENTRYPOINT] {$message}" . PHP_EOL;
-    
-    // Only log to stdout for Docker
-    echo $logMessage;
 }
 
 /**
@@ -97,7 +74,7 @@ function loadServiceClass(string $serviceName): bool {
     
     require_once $serviceFile;
     
-    // Check if class exists (e.g., 'apache' -> 'Apache')
+    // Check if class exists (e.g., 'backend' -> 'Backend')
     $className = ucfirst($serviceName);
     if (!class_exists($className)) {
         logMessage("Service class not found: {$className}", 'ERROR');
@@ -105,4 +82,19 @@ function loadServiceClass(string $serviceName): bool {
     }
     
     return true;
+}
+
+/**
+ * Log function for entrypoint - only stdout for Docker
+ */
+function logMessage(string $message, string $level = 'INFO'): void {
+    $timestamp = date('Y-m-d H:i:s');
+
+    $level = $level == 'INFO' ? "\033[38;5;117mINFO\033[0m" : $level;
+    $level = $level == 'ERROR' ? "\033[31mERROR\033[0m" : $level;
+
+    $logMessage = "[{$timestamp}] [{$level}] [ENTRYPOINT] {$message}" . PHP_EOL;
+    
+    // Only log to stdout for Docker
+    echo $logMessage;
 }
