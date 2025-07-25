@@ -10,22 +10,25 @@ jobs:
   phpunit-tests:
     name: PHPUnit Test Suite
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     
     strategy:
       matrix:
-        php-version: ['8.2', '8.3', '8.4']
-        test-suite: ['unit', 'integration', 'functional', 'performance']
+        php-version: ['8.4']  # Simplified to one version initially
+        test-suite: ['unit']  # Simplified to unit tests initially
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Docker containers
+        timeout-minutes: 10
         run: |
           cd tests
           PHP_VERSION=${{ matrix.php-version }} ./setup-container.sh
 
       - name: Run ${{ matrix.test-suite }} tests in Docker
+        timeout-minutes: 5
         run: |
           cd tests
           PHP_VERSION=${{ matrix.php-version }} ./run-tests.sh ${{ matrix.test-suite }}

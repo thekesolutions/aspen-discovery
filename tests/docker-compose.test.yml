@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   php-test:
     image: php:8.4-cli
