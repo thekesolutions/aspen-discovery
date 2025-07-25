@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  php-test:
+    image: php:8.4-cli
+    working_dir: /app
+    volumes:
+      - ../:/app
+    environment:
+      - COMPOSER_ALLOW_SUPERUSER=1
+    command: tail -f /dev/null
+    depends_on:
+      - mysql-test
+
+  mysql-test:
+    image: mariadb:10.5
+    environment:
+      MYSQL_ROOT_PASSWORD: testpass
+      MYSQL_DATABASE: aspen_test
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpass
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-test-data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+  composer-test:
+    image: composer:2
+    working_dir: /app/tests/phpunit
+    volumes:
+      - ../:/app
+    environment:
+      - COMPOSER_ALLOW_SUPERUSER=1
+    profiles:
+      - setup
+
+volumes:
+  mysql-test-data:

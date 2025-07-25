@@ -230,6 +230,7 @@ code/aspen_app/updateEASTestApps.sh
 code/aspen_app/updateTestApps.sh
 code/cron/.idea/misc.xml
 tests/phpunit/.phpunit.result.cache
+tests/phpunit/vendor/
 install/unit_tests_local.ini
 intellij_project
 phpstorm_project

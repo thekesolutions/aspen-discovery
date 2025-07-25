@@ -14,10 +14,58 @@
 		>
 	<php>
 		<ini name="memory_limit" value="2048M"/>
+		<env name="APP_ENV" value="testing"/>
 	</php>
-	<testsuite name="Aspen Discovery Unit Tests">
-		<directory suffix="InitializationTests.php">./tests</directory>
-		<directory suffix="Tests.php">./tests/services/API</directory>
-		<directory suffix="FinalizationTests.php">./tests</directory>
-	</testsuite>
+	
+	<!-- Test Suites -->
+	<testsuites>
+		<testsuite name="initialization">
+			<directory suffix="InitializationTests.php">./tests</directory>
+		</testsuite>
+		
+		<testsuite name="unit">
+			<directory suffix="Test.php">./tests/unit</directory>
+		</testsuite>
+		
+		<testsuite name="integration">
+			<directory suffix="Test.php">./tests/integration</directory>
+		</testsuite>
+		
+		<testsuite name="functional">
+			<directory suffix="Test.php">./tests/functional</directory>
+		</testsuite>
+		
+		<testsuite name="api">
+			<directory suffix="Tests.php">./tests/services/API</directory>
+		</testsuite>
+		
+		<testsuite name="performance">
+			<directory suffix="Test.php">./tests/performance</directory>
+		</testsuite>
+		
+		<testsuite name="finalization">
+			<directory suffix="FinalizationTests.php">./tests</directory>
+		</testsuite>
+	</testsuites>
+	
+	<!-- Coverage Configuration -->
+	<coverage>
+		<include>
+			<directory suffix=".php">../../code/web/sys</directory>
+			<directory suffix=".php">../../code/web/services</directory>
+			<directory suffix=".php">../../code/web/RecordDrivers</directory>
+			<directory suffix=".php">../../code/web/Drivers</directory>
+		</include>
+		<exclude>
+			<directory>../../code/web/sys/Smarty</directory>
+			<directory>../../code/web/sys/Parsedown</directory>
+			<directory>../../code/web/sys/Email/PHPMailer-6.9.1</directory>
+		</exclude>
+	</coverage>
+	
+	<!-- Logging Configuration -->
+	<logging>
+		<junit outputFile="./logs/junit.xml"/>
+		<testdoxHtml outputFile="./logs/testdox.html"/>
+	</logging>
 </phpunit>

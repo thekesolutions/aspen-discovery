@@ -1,44 +1,66 @@
 <?php
-$_SERVER['aspen_server'] = 'unit_tests.localhost';
+/**
+ * PHPUnit Bootstrap for Aspen Discovery Testing Framework
+ * 
+ * This bootstrap provides a minimal testing environment without
+ * loading the full Aspen application stack until needed.
+ */
 
-require_once '../../code/web/bootstrap.php';
-//Load a clean database at the start of unit testing?
-global $configArray;
-global $aspen_db;
+// Set test environment variables
+$_SERVER['aspen_server'] = 'test_site';
+$_SERVER['REQUEST_URI'] = '/test';
+$_SERVER['HTTP_HOST'] = 'test.localhost';
 
-$dbUser = $configArray['Database']['database_user'];
-$dbPassword = $configArray['Database']['database_password'];
-$dbName = $configArray['Database']['database_aspen_dbname'];
-$dbHost = $configArray['Database']['database_aspen_host'];
-$dbPort = $configArray['Database']['database_aspen_dbport'];
+// Define test environment constants
+define('ROOT_DIR', realpath(__DIR__ . '/../../'));
+define('TEST_MODE', true);
 
-$curDir = __DIR__;
-$baseAspenSQL = "$curDir/../../install/aspen.sql";
+// Load testing framework classes
+require_once __DIR__ . '/src/AspenTestCase.php';
+require_once __DIR__ . '/src/DatabaseTestCase.php';
+require_once __DIR__ . '/src/TestDataFactory.php';
 
-//Remove all existing database tables
-$result = $aspen_db->query("SELECT TABLE_NAME FROM information_schema.tables where TABLE_SCHEMA = '$dbName'");
-$allTables = $result->fetchAll(PDO::FETCH_ASSOC);
-foreach ($allTables as $table) {
-	$aspen_db->exec("DROP TABLE {$table['TABLE_NAME']}");
+// Initialize basic test configuration
+$testConfigFile = ROOT_DIR . '/sites/test_site/conf/config.ini';
+if (!file_exists($testConfigFile)) {
+    // Fallback test configuration
+    $testConfig = [
+        'Database' => [
+            'database_aspen_host' => '127.0.0.1',
+            'database_aspen_dbname' => 'aspen_test',
+            'database_user' => 'root',
+            'database_password' => 'password',
+            'database_aspen_dbport' => 3306
+        ],
+        'Site' => [
+            'isProduction' => false,
+            'url' => 'http://test.localhost'
+        ],
+        'Testing' => [
+            'environment' => 'test',
+            'mock_external_services' => true
+        ]
+    ];
+    
+    // Create basic test database connection for tests that need it
+    try {
+        $dsn = sprintf(
+            'mysql:host=%s;port=%d;dbname=%s',
+            $testConfig['Database']['database_aspen_host'],
+            $testConfig['Database']['database_aspen_dbport'],
+            $testConfig['Database']['database_aspen_dbname']
+        );
+        
+        $GLOBALS['test_db'] = new PDO(
+            $dsn,
+            $testConfig['Database']['database_user'],
+            $testConfig['Database']['database_password'],
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+        );
+    } catch (PDOException $e) {
+        // Database connection failed - tests that need DB will handle this
+        $GLOBALS['test_db'] = null;
+    }
 }
 
-//Import blank database
-$importCommand = "mysql -u$dbUser -p$dbPassword -h$dbHost -P$dbPort $dbName < $baseAspenSQL";
-exec($importCommand);
-
-////Import unit test specific data
-$unitTestsSQL = "$curDir/../../tests/unit_tests.sql";
-$importCommand = "mysql -u$dbUser -p$dbPassword -h$dbHost -P$dbPort $dbName < $unitTestsSQL";
-$results = [];
-exec($importCommand, $results);
-
-//Make sure solr is running?
-
-
-require_once '../../code/web/bootstrap_aspen.php';
-
-//Setup interface
-global $interface;
-$interface = new UInterface();
-
-echo "Aspen Discovery PHPUnit tests starting\n";
+echo "PHPUnit Testing Framework Bootstrap Complete\n";
