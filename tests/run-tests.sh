@@ -36,12 +36,12 @@ run_test_suite() {
     if [ "$test_suite" = "all" ]; then
         docker compose -f docker-compose.test.${PHP_VERSION:-8.4}.yml exec -T php-test bash -c "
             cd tests/phpunit &&
-            php phpunit.phar --configuration phpunit.xml --verbose --colors=always
+            php phpunit.phar --configuration phpunit.xml --colors=always
         "
     else
         docker compose -f docker-compose.test.${PHP_VERSION:-8.4}.yml exec -T php-test bash -c "
             cd tests/phpunit &&
-            php phpunit.phar --configuration phpunit.xml --testsuite=${test_suite} --verbose --colors=always
+            php phpunit.phar --configuration phpunit.xml --testsuite=${test_suite} --colors=always
         "
     fi
 

@@ -57,7 +57,7 @@ composer clean                  # Remove logs and vendor files
 
 ```bash
 # Run all tests with verbose output
-./phpunit.phar --configuration phpunit.xml --verbose
+./phpunit.phar --configuration phpunit.xml --display-warnings
 
 # Run specific test suite
 ./phpunit.phar --configuration phpunit.xml --testsuite=unit
@@ -294,7 +294,7 @@ chmod 755 vendor/
 ./phpunit.phar --debug tests/unit/FailingTest.php
 
 # Run with verbose error reporting
-./phpunit.phar --verbose --stop-on-failure tests/unit/
+./phpunit.phar --display-warnings --stop-on-failure tests/unit/
 
 # Check logs for detailed error information
 cat logs/junit.xml

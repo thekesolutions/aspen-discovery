@@ -285,7 +285,7 @@ chmod 755 tests/phpunit/logs/
 ### Debug Mode
 Run tests with verbose output:
 ```bash
-./phpunit.phar --verbose --debug tests/unit/MyTest.php
+./phpunit.phar --display-warnings --debug tests/unit/MyTest.php
 ```
 
 ### Coverage Issues
