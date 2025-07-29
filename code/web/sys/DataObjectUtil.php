@@ -2,6 +2,7 @@
 
 require_once ROOT_DIR . '/Action.php';
 require_once ROOT_DIR . '/services/Admin/Admin.php';
+require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
 
 class DataObjectUtil {
 	/**
@@ -408,10 +409,21 @@ class DataObjectUtil {
 							$pathToThumbs = $destFolder . '/thumbnail';
 							$pathToMedium = $destFolder . '/medium';
 						} else {
+							// Legacy fallback: Use StorageManager for better path management
+							$logger->log("Using legacy file structure for $propertyName", Logger::LOG_DEBUG);
+							
+							$storageManager = StorageManager::getInstance();
 							$destFileName = ($object->id != null) ? $objectType."_".$object->id.$fileType : "Temp_".$_FILES[$propertyName]["name"];
-							$destFolder = $configArray['Site']['local'] . '/files/original';
-							$pathToThumbs = $configArray['Site']['local'] . '/files/thumbnail';
-							$pathToMedium = $configArray['Site']['local'] . '/files/medium';
+							
+							// Map to new storage structure
+							$destFolder = $storageManager->getUserDataPath('images', 'legacy', 'original');
+							$pathToThumbs = $storageManager->getUserDataPath('images', 'legacy', 'thumbnail');
+							$pathToMedium = $storageManager->getUserDataPath('images', 'legacy', 'medium');
+							
+							// Ensure directories exist
+							$storageManager->ensureDirectoryExists($destFolder);
+							$storageManager->ensureDirectoryExists($pathToThumbs);
+							$storageManager->ensureDirectoryExists($pathToMedium);
 						}
 
 						$destFullPath = $destFolder . '/' . $destFileName;
@@ -419,8 +431,15 @@ class DataObjectUtil {
 						$prevUpload = $destFolder . '/' . "Temp_" . $_FILES[$propertyName]["name"];
 						if (file_exists($prevUpload)) {
 							rename($prevUpload, $destFullPath);
+							$copyResult = true;
+						} else {
+							// Use StorageManager for file operations when available
+							if (isset($storageManager)) {
+								$copyResult = $storageManager->storeFile($_FILES[$propertyName]["tmp_name"], $destFullPath);
+							} else {
+								$copyResult = copy($_FILES[$propertyName]["tmp_name"], $destFullPath);
+							}
 						}
-						$copyResult = copy($_FILES[$propertyName]["tmp_name"], $destFullPath);
 
 						if ($copyResult) {
 							require_once ROOT_DIR . '/sys/Covers/CoverImageUtils.php';
