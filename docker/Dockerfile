@@ -29,6 +29,7 @@ RUN apt -y update \
 	  gnupg2 \
 	  netcat-openbsd \
 	  inetutils-ping \
+	  net-tools \
 	  rsync \
 	  man \
 	&& rm -rf /var/cache/apt/archives/* \
