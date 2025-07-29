@@ -42,6 +42,18 @@ require_once ROOT_DIR . '/sys/ConfigArray.php';
 global $configArray;
 $configArray = readConfig();
 
+// Initialize storage directories if needed
+if (!defined('SKIP_STORAGE_INIT')) {
+	try {
+		require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+		$storageManager = StorageManager::getInstance();
+		$storageManager->initializeStorage();
+	} catch (Exception $e) {
+		// Log error but don't fail bootstrap - storage might not be configured yet
+		error_log("Storage initialization warning: " . $e->getMessage());
+	}
+}
+
 if (isset($_SERVER['SERVER_NAME'])) {
 	$aspenUsage->instance = $_SERVER['SERVER_NAME'];
 } else {
