@@ -1,6 +1,8 @@
 <?php /** @noinspection PhpMissingFieldTypeInspection */
 
 require_once ROOT_DIR . '/sys/DB/DataObject.php';
+		require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+		$storageManager = StorageManager::getInstance();
 require_once ROOT_DIR . '/sys/LibraryLocation/Holiday.php';
 require_once ROOT_DIR . '/sys/LibraryLocation/LibraryFacetSetting.php';
 require_once ROOT_DIR . '/sys/LibraryLocation/LibraryCombinedResultSection.php';
@@ -5754,20 +5756,20 @@ class Library extends DataObject {
 			if ($theme->find(true)) {
 				$theme->applyDefaults();
 				if ($theme->logoName) {
-					$apiInfo['logo'] = $configArray['Site']['url'] . '/files/original/' . $theme->logoName;
+					$apiInfo['logo'] = $configArray['Site']['url'] . str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_THEMES, 'original')) . '/' . $theme->logoName;
 				}
 				if ($theme->favicon) {
-					$apiInfo['favicon'] = $configArray['Site']['url'] . '/files/original/' . $theme->favicon;
+					$apiInfo['favicon'] = $configArray['Site']['url'] . str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_THEMES, 'original')) . '/' . $theme->favicon;
 				}
 				if ($theme->logoApp) {
-					$apiInfo['logoApp'] = $configArray['Site']['url'] . '/files/original/' . $theme->logoApp;
+					$apiInfo['logoApp'] = $configArray['Site']['url'] . str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_THEMES, 'original')) . '/' . $theme->logoApp;
 				}
 				if ($theme->headerLogoApp) {
-					$apiInfo['headerLogoApp'] = $configArray['Site']['url'] . '/files/original/' . $theme->headerLogoApp;
+					$apiInfo['headerLogoApp'] = $configArray['Site']['url'] . str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_THEMES, 'original')) . '/' . $theme->headerLogoApp;
 					[
 						$width,
 						$height,
-					] = @getimagesize(ROOT_DIR . '/files/original/' . $theme->headerLogoApp);
+					] = @getimagesize(ROOT_DIR . str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_THEMES, 'original')) . '/' . $theme->headerLogoApp);
 					$apiInfo['headerLogoWidth'] = $width;
 					$apiInfo['headerLogoHeight'] = $height;
 				}
