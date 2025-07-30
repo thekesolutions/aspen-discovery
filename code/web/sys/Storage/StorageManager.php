@@ -56,6 +56,25 @@ class StorageManager {
     private function loadConfiguration() {
         global $configArray, $serverName;
         
+        // Ensure serverName is available - fallback for cron contexts
+        if (empty($serverName) || $serverName === 'default') {
+            // Try to get from environment first
+            if (!empty($_ENV['SITE_NAME'])) {
+                $serverName = $_ENV['SITE_NAME'];
+            } elseif (!empty(getenv('SITE_NAME'))) {
+                $serverName = getenv('SITE_NAME');
+            } else {
+                // Last resort: try to extract from config directory structure
+                $configDir = $_ENV['CONFIG_DIRECTORY'] ?? '';
+                if (!empty($configDir) && preg_match('/sites\/([^\/]+)/', $configDir, $matches)) {
+                    $serverName = $matches[1];
+                } else {
+                    error_log("StorageManager: Unable to determine server name for storage paths");
+                    $serverName = 'localhost'; // Safe fallback
+                }
+            }
+        }
+        
         // Default configuration - all user data directly in the data directory
         $this->config = [
             'backend_type' => 'local', // Only local storage supported
