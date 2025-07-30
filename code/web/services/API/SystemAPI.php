@@ -1,5 +1,7 @@
 <?php
 require_once ROOT_DIR . '/services/API/AbstractAPI.php';
+		require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+		$storageManager = StorageManager::getInstance();
 
 class SystemAPI extends AbstractAPI {
 	function launch() {
@@ -246,11 +248,11 @@ class SystemAPI extends AbstractAPI {
 			if ($app->find(true)) {
 				$settings = [];
 				if ($app->logoLogin) {
-					$settings['logoLogin'] = $configArray['Site']['url'] . '/files/original/' . $app->logoLogin;
+					$settings['logoLogin'] = $configArray['Site']['url'] . str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_THEMES, 'original')) . '/' . $app->logoLogin;
 				}
 
 				if ($app->logoSplash) {
-					$settings['logoSplash'] = $configArray['Site']['url'] . '/files/original/' . $app->logoSplash;
+					$settings['logoSplash'] = $configArray['Site']['url'] . str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_THEMES, 'original')) . '/' . $app->logoSplash;
 				}
 
 				if ($app->privacyPolicy) {
@@ -606,7 +608,7 @@ class SystemAPI extends AbstractAPI {
 				}
 			}
 
-			$dataPath = $configArray['Site']['local'] . '/files/original/';
+			$dataPath = $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_THEMES, 'original');
 
 			if ($type === "logo") {
 				$fileName = $theme->logoName;
