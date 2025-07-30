@@ -1,5 +1,7 @@
 <?php
 require_once ROOT_DIR . '/sys/Covers/BookCoverInfo.php';
+		require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+		$storageManager = StorageManager::getInstance();
 
 class BookCoverProcessor {
 	/**
@@ -1575,7 +1577,7 @@ class BookCoverProcessor {
 						$title = $OAIRecordDriver->getTitle();
 						$author = null;
 
-						$image = ROOT_DIR . '/files/original/' . $sourceCollection->defaultCover;
+						$image = $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_DEFAULT_COVERS, 'original') . '/' . $sourceCollection->defaultCover;
 						$coverBuilder->getCover($title, $author, $this->cacheFile, $image);
 						if ($this->processImageURL('open_archives',  $this->cacheFile, false)) {
 							return true;
@@ -2141,7 +2143,7 @@ class BookCoverProcessor {
 			if (empty($image)) {
 				$coverBuilder->getCover($title, $author, $this->cacheFile);
 			} else {
-				$image = ROOT_DIR . '/files/original/' . $image;
+				$image = $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_DEFAULT_COVERS, 'original') . '/' . $image;
 				$coverBuilder->getCover($title, $author, $this->cacheFile, $image);
 			}
 

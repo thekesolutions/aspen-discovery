@@ -1,5 +1,7 @@
 <?php
 require_once ROOT_DIR . '/sys/Covers/AbstractCoverBuilder.php';
+		require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+		$storageManager = StorageManager::getInstance();
 require_once ROOT_DIR . '/sys/Utils/StringUtils.php';
 require_once ROOT_DIR . '/sys/Covers/CoverImageUtils.php';
 
@@ -39,7 +41,7 @@ class WebPageCoverBuilder extends AbstractCoverBuilder {
 		}
 
 		if ($defaultCover){
-			$cover = ROOT_DIR . '/files/original/' . $defaultCover;
+			$cover = $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_DEFAULT_COVERS, 'original') . '/' . $defaultCover;
 
 			$coverImage = imagecreatefromstring(file_get_contents($cover));
 

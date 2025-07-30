@@ -1,6 +1,8 @@
 <?php
 
 require_once ROOT_DIR . '/sys/Utils/ColorUtils.php';
+		require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+		$storageManager = StorageManager::getInstance();
 require_once ROOT_DIR . '/sys/Utils/StringUtils.php';
 require_once ROOT_DIR . '/sys/Covers/CoverImageUtils.php';
 
@@ -64,7 +66,7 @@ class DefaultCoverImageBuilder {
 					$this->foregroundColor = $tmpColor;
 				}
 				if (!empty($theme->defaultCover)) {
-					$this->defaultCoverImage = ROOT_DIR . '/files/original/' . $theme->defaultCover;
+					$this->defaultCoverImage = $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_DEFAULT_COVERS, 'original') . '/' . $theme->defaultCover;
 				}
 			}
 		}
