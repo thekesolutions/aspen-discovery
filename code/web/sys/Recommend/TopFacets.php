@@ -1,6 +1,8 @@
 <?php
 
 require_once ROOT_DIR . '/sys/Recommend/Interface.php';
+		require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+		$storageManager = StorageManager::getInstance();
 
 class TopFacets implements RecommendationInterface {
 	/** @var SearchObject_SolrSearcher searchObject */
@@ -89,37 +91,37 @@ class TopFacets implements RecommendationInterface {
 					if (!empty($facetKey) && array_key_exists($facetKey, TopFacets::$formatCategorySortOrder)) {
 						if ($appliedTheme != null){
 							if (strtolower($facet['value']) == "books" && !empty($appliedTheme->booksImage)){
-								$facet['imageName'] = '/files/original/' . $appliedTheme->booksImage;
+								$facet['imageName'] = str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original')) . '/' . $appliedTheme->booksImage;
 								if (!empty($appliedTheme->booksImageSelected)){
-									$facet['imageNameSelected'] = '/files/original/' . $appliedTheme->booksImageSelected;
+									$facet['imageNameSelected'] = str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original')) . '/' . $appliedTheme->booksImageSelected;
 								}else{
 									$facet['imageNameSelected'] = strtolower(str_replace(' ', '', $facet['value'])) . "_selected.png";
 								}
 							}elseif (strtolower($facet['value']) == "ebook" && !empty($appliedTheme->eBooksImage)){
-								$facet['imageName'] = '/files/original/' . $appliedTheme->eBooksImage;
+								$facet['imageName'] = str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original')) . '/' . $appliedTheme->eBooksImage;
 								if (!empty($appliedTheme->eBooksImageSelected)){
-									$facet['imageNameSelected'] = '/files/original/' . $appliedTheme->eBooksImageSelected;
+									$facet['imageNameSelected'] = str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original')) . '/' . $appliedTheme->eBooksImageSelected;
 								}else{
 									$facet['imageNameSelected'] = strtolower(str_replace(' ', '', $facet['value'])) . "_selected.png";
 								}
 							}elseif (strtolower($facet['value']) == "audio books" && !empty($appliedTheme->audioBooksImage)){
-								$facet['imageName'] = '/files/original/' . $appliedTheme->audioBooksImage;
+								$facet['imageName'] = str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original')) . '/' . $appliedTheme->audioBooksImage;
 								if (!empty($appliedTheme->audioBooksImageSelected)){
-									$facet['imageNameSelected'] = '/files/original/' . $appliedTheme->audioBooksImageSelected;
+									$facet['imageNameSelected'] = str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original')) . '/' . $appliedTheme->audioBooksImageSelected;
 								}else{
 									$facet['imageNameSelected'] = strtolower(str_replace(' ', '', $facet['value'])) . "_selected.png";
 								}
 							}elseif (strtolower($facet['value']) == "music" && !empty($appliedTheme->musicImage)){
-								$facet['imageName'] = '/files/original/' . $appliedTheme->musicImage;
+								$facet['imageName'] = str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original')) . '/' . $appliedTheme->musicImage;
 								if (!empty($appliedTheme->musicImageSelected)){
-									$facet['imageNameSelected'] = '/files/original/' . $appliedTheme->musicImageSelected;
+									$facet['imageNameSelected'] = str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original')) . '/' . $appliedTheme->musicImageSelected;
 								}else{
 									$facet['imageNameSelected'] = strtolower(str_replace(' ', '', $facet['value'])) . "_selected.png";
 								}
 							}elseif (strtolower($facet['value']) == "movies" && !empty($appliedTheme->moviesImage)){
-								$facet['imageName'] = '/files/original/' . $appliedTheme->moviesImage;
+								$facet['imageName'] = str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original')) . '/' . $appliedTheme->moviesImage;
 								if (!empty($appliedTheme->moviesImageSelected)){
-									$facet['imageNameSelected'] = '/files/original/' . $appliedTheme->moviesImageSelected;
+									$facet['imageNameSelected'] = str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original')) . '/' . $appliedTheme->moviesImageSelected;
 								}else{
 									$facet['imageNameSelected'] = strtolower(str_replace(' ', '', $facet['value'])) . "_selected.png";
 								}
