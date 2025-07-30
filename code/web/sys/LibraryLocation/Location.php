@@ -185,9 +185,9 @@ class Location extends DataObject {
 
 	static $_objectStructure = [];
 	static function getObjectStructure($context = ''): array {
-		if (isset(self::$_objectStructure[$context]) && self::$_objectStructure[$context] !== null) {
-			return self::$_objectStructure[$context];
-		}
+		require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+		$storageManager = StorageManager::getInstance();
+		
 		//Load Libraries for lookup values
 		$library = new Library();
 		$library->orderBy('displayName');
@@ -366,6 +366,7 @@ class Location extends DataObject {
 				'maxHeight' => 400,
 				'hideInLists' => true,
 				'affectsLiDA' => true,
+				'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_LOCATIONS, 'original'),
 			],
 			'createSearchInterface' => [
 				'property' => 'createSearchInterface',
@@ -3076,7 +3077,7 @@ class Location extends DataObject {
 
 		$apiInfo['locationImage'] = null;
 		if (isset($this->locationImage)) {
-			$apiInfo['locationImage'] = $configArray['Site']['url'] . '/files/original/' . rawurlencode($this->locationImage);
+			$apiInfo['locationImage'] = $configArray['Site']['url'] . str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_LOCATIONS, 'original')) . '/' . rawurlencode($this->locationImage);
 		}
 
 		$baseUrl = $parentLibrary->baseUrl;
