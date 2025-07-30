@@ -31,6 +31,12 @@ class StorageManager {
     const CATEGORY_WEB_BUILDER = 'web_builder';
     const CATEGORY_REWARDS = 'rewards';
     const CATEGORY_LEGACY = 'legacy';
+    
+    // Image subcategories
+    const CATEGORY_THEMES = 'themes';      // Theme images (logos, favicons, etc.)
+    const CATEGORY_FACETS = 'facets';      // Facet category images
+    const CATEGORY_LOCATIONS = 'locations'; // Location images
+    const CATEGORY_DEFAULT_COVERS = 'default_covers'; // Default cover images
 
     private function __construct() {
         $this->loadConfiguration();
