@@ -568,6 +568,9 @@ class Theme extends DataObject {
 	}
 
 	static function getObjectStructure($context = ''): array {
+		require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+		$storageManager = StorageManager::getInstance();
+		
 		$libraryThemeStructure = LibraryTheme::getObjectStructure($context);
 		unset($libraryThemeStructure['themeId']);
 		unset($libraryThemeStructure['weight']);
@@ -710,6 +713,7 @@ class Theme extends DataObject {
 				'maxWidth' => 1170,
 				'maxHeight' => 250,
 				'hideInLists' => true,
+				'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_THEMES, 'original'),
 			],
 			'favicon' => [
 				'property' => 'favicon',
@@ -720,6 +724,7 @@ class Theme extends DataObject {
 				'maxWidth' => 32,
 				'maxHeight' => 32,
 				'hideInLists' => true,
+				'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_THEMES, 'original'),
 			],
 			'defaultCover' => [
 				'property' => 'defaultCover',
@@ -730,6 +735,7 @@ class Theme extends DataObject {
 				'maxWidth' => 280,
 				'maxHeight' => 280,
 				'hideInLists' => true,
+				'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_DEFAULT_COVERS, 'original'),
 			],
 			'coverStyle' => [
 				'property' => 'coverStyle',
@@ -856,6 +862,7 @@ class Theme extends DataObject {
 				'hideInLists' => true,
 				'thumbWidth' => 750,
 				'maxWidth' => 1170,
+				'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_THEMES, 'original'),
 			],
 			'headerBackgroundImageSize' => [
 				'property' => 'headerBackgroundImageSize',
@@ -961,6 +968,7 @@ class Theme extends DataObject {
 				'maxWidth' => 250,
 				'maxHeight' => 150,
 				'hideInLists' => true,
+				'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_THEMES, 'original'),
 			],
 			'footerImageLink' => [
 				'property' => 'footerLogoLink',
@@ -1124,6 +1132,7 @@ class Theme extends DataObject {
 						'maxWidth' => 512,
 						'maxHeight' => 512,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_THEMES, 'original'),
 					],
 					'headerLogoApp' => [
 						'property' => 'headerLogoApp',
@@ -1135,6 +1144,7 @@ class Theme extends DataObject {
 						'maxWidth' => 1536,
 						'maxHeight' => 200,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_THEMES, 'original'),
 					],
 					'headerLogoAlignmentApp' => [
 						'property' => 'headerLogoAlignmentApp',
@@ -1306,6 +1316,7 @@ class Theme extends DataObject {
 						'maxWidth' => 50,
 						'maxHeight' => 50,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 					'booksImageSelected' => [
 						'property' => 'booksImageSelected',
@@ -1316,6 +1327,7 @@ class Theme extends DataObject {
 						'maxWidth' => 50,
 						'maxHeight' => 50,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 					'eBooksImage' => [
 						'property' => 'eBooksImage',
@@ -1326,6 +1338,7 @@ class Theme extends DataObject {
 						'maxWidth' => 50,
 						'maxHeight' => 50,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 					'eBooksImageSelected' => [
 						'property' => 'eBooksImageSelected',
@@ -1336,6 +1349,7 @@ class Theme extends DataObject {
 						'maxWidth' => 50,
 						'maxHeight' => 50,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 					'audioBooksImage' => [
 						'property' => 'audioBooksImage',
@@ -1346,6 +1360,7 @@ class Theme extends DataObject {
 						'maxWidth' => 50,
 						'maxHeight' => 50,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 					'audioBooksImageSelected' => [
 						'property' => 'audioBooksImageSelected',
@@ -1356,6 +1371,7 @@ class Theme extends DataObject {
 						'maxWidth' => 50,
 						'maxHeight' => 50,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 					'musicImage' => [
 						'property' => 'musicImage',
@@ -1366,6 +1382,7 @@ class Theme extends DataObject {
 						'maxWidth' => 50,
 						'maxHeight' => 50,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 					'musicImageSelected' => [
 						'property' => 'musicImageSelected',
@@ -1376,6 +1393,7 @@ class Theme extends DataObject {
 						'maxWidth' => 50,
 						'maxHeight' => 50,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 					'moviesImage' => [
 						'property' => 'moviesImage',
@@ -1386,6 +1404,7 @@ class Theme extends DataObject {
 						'maxWidth' => 50,
 						'maxHeight' => 50,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 					'moviesImageSelected' => [
 						'property' => 'moviesImageSelected',
@@ -1396,6 +1415,7 @@ class Theme extends DataObject {
 						'maxWidth' => 50,
 						'maxHeight' => 50,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 				],
 			],
@@ -1415,6 +1435,7 @@ class Theme extends DataObject {
 						'maxWidth' => 400,
 						'maxHeight' => 400,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 					'genealogyImage' => [
 						'property' => 'genealogyImage',
@@ -1425,6 +1446,7 @@ class Theme extends DataObject {
 						'maxWidth' => 400,
 						'maxHeight' => 400,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 					'articlesDBImage' => [
 						'property' => 'articlesDBImage',
@@ -1435,6 +1457,7 @@ class Theme extends DataObject {
 						'maxWidth' => 400,
 						'maxHeight' => 400,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 					'eventsImage' => [
 						'property' => 'eventsImage',
@@ -1445,6 +1468,7 @@ class Theme extends DataObject {
 						'maxWidth' => 400,
 						'maxHeight' => 400,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 					'listsImage' => [
 						'property' => 'listsImage',
@@ -1455,6 +1479,7 @@ class Theme extends DataObject {
 						'maxWidth' => 400,
 						'maxHeight' => 400,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 					'seriesImage' => [
 						'property' => 'seriesImage',
@@ -1465,6 +1490,7 @@ class Theme extends DataObject {
 						'maxWidth' => 400,
 						'maxHeight' => 400,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 					'libraryWebsiteImage' => [
 						'property' => 'libraryWebsiteImage',
@@ -1475,6 +1501,7 @@ class Theme extends DataObject {
 						'maxWidth' => 400,
 						'maxHeight' => 400,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 					'historyArchivesImage' => [
 						'property' => 'historyArchivesImage',
@@ -1485,6 +1512,7 @@ class Theme extends DataObject {
 						'maxWidth' => 400,
 						'maxHeight' => 400,
 						'hideInLists' => true,
+						'path' => $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_FACETS, 'original'),
 					],
 				],
 			],
@@ -3453,11 +3481,13 @@ class Theme extends DataObject {
 
 	public function getApiInfo() : Theme {
 		global $configArray;
+		require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+		$storageManager = StorageManager::getInstance();
 
 		$apiInfo = $this;
-		$this->logoName = $configArray['Site']['url'] . '/files/original/' . $this->logoName;
-		$this->favicon = $configArray['Site']['url'] . '/files/original/' . $this->favicon;
-		$this->headerLogoApp = $configArray['Site']['url'] . '/files/original/' . $this->headerLogoApp;
+		$this->logoName = $configArray['Site']['url'] . str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_THEMES, 'original')) . '/' . $this->logoName;
+		$this->favicon = $configArray['Site']['url'] . str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_THEMES, 'original')) . '/' . $this->favicon;
+		$this->headerLogoApp = $configArray['Site']['url'] . str_replace('/data/aspen-discovery/' . $_SERVER['SERVER_NAME'], '', $storageManager->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_THEMES, 'original')) . '/' . $this->headerLogoApp;
 		unset($this->additionalCssType);
 		unset($this->additionalCss);
 		unset($this->generatedCss);
