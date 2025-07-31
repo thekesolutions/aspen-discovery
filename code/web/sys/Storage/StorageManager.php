@@ -51,15 +51,34 @@ class StorageManager {
     }
     
     /**
+     * Get server name using the same logic as ConfigArray.php
+     * This handles cases where StorageManager is initialized before ConfigArray sets global $serverName
+     */
+    private function getServerName() {
+        // Use the same detection logic as ConfigArray.php
+        if (!empty($_SERVER['aspen_server'])) {
+            return $_SERVER['aspen_server'];
+        } elseif (!empty($_SERVER['SERVER_NAME'])) {
+            return $_SERVER['SERVER_NAME'];
+        } elseif (count($_SERVER['argv']) > 1) {
+            return $_SERVER['argv'][1];
+        } elseif (!empty(getenv('SITE_NAME'))) {
+            return getenv('SITE_NAME');
+        } else {
+            error_log("StorageManager: Unable to determine server name");
+            return 'localhost'; // Safe fallback
+        }
+    }
+
+    /**
      * Load storage configuration from config files and environment
      */
     private function loadConfiguration() {
         global $configArray, $serverName;
         
-        // ConfigArray.php should have already set $serverName properly
-        // If it's still empty, that's a configuration error that should be fixed there
+        // Get server name directly if global variable isn't set yet (bootstrap timing issue)
         if (empty($serverName)) {
-            error_log("StorageManager: serverName is empty - this indicates a ConfigArray.php issue");
+            $serverName = $this->getServerName();
         }
         
         // Default configuration - all user data directly in the data directory
