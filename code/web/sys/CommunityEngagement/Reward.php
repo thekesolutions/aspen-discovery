@@ -64,7 +64,7 @@ class Reward extends DataObject {
 				'type' => 'image',
 				'label' => 'Image for Digital Badge',
 				'description' => 'The image to use for the digital badge',
-				'path' => '/data/aspen-discovery/' . $serverName . '/uploads/reward_image/full',
+				'path' => StorageManager::getInstance()->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_REWARDS, 'full'),
 				'displayUrl' => '/CommunityEngagement/ViewImage?size=full&id=',
 				'required' => false,
 			],
@@ -87,8 +87,8 @@ class Reward extends DataObject {
 
 	public function uploadImage() {
 		if (!empty($this->badgeImage)) {
-			global $serverName;
-			$imageFile = '/data/aspen-discovery/' . $serverName . '/uploads/reward_image/full/' . $this->badgeImage;
+			require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+			$imageFile = StorageManager::getInstance()->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_REWARDS, 'full') . '/' . $this->badgeImage;
 		}
 	}
 

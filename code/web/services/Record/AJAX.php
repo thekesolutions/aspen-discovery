@@ -1358,8 +1358,9 @@ class Record_AJAX extends Action {
 						$result['message'] = "Could not find the record to attach this file to";
 					} else {
 						//Upload data files
-						global $serverName;
-						$dataPath = '/data/aspen-discovery/' . $serverName . '/uploads/record_pdfs/';
+						require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+						$storageManager = StorageManager::getInstance();
+						$dataPath = $storageManager->getUserDataPath(StorageManager::CATEGORY_FILES, 'record_pdfs') . '/';
 						if (!file_exists($dataPath)) {
 							global $configArray;
 							if ($configArray['System']['operatingSystem'] == 'windows') {
@@ -1435,8 +1436,9 @@ class Record_AJAX extends Action {
 						$result['message'] = "Could not find the record to attach this file to";
 					} else {
 						//Upload data files
-						global $serverName;
-						$dataPath = '/data/aspen-discovery/' . $serverName . '/uploads/record_files/';
+						require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+						$storageManager = StorageManager::getInstance();
+						$dataPath = $storageManager->getUserDataPath(StorageManager::CATEGORY_FILES, 'record_files') . '/';
 						if (!file_exists($dataPath)) {
 							global $configArray;
 							if ($configArray['System']['operatingSystem'] == 'windows') {

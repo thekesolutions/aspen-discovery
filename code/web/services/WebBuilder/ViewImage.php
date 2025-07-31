@@ -24,8 +24,8 @@ class WebBuilder_ViewImage extends Action {
 			die();
 		}
 
-		global $serverName;
-		$dataPath = '/data/aspen-discovery/' . $serverName . '/uploads/web_builder_image/';
+		require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+		$dataPath = StorageManager::getInstance()->getUserDataPath(StorageManager::CATEGORY_IMAGES, StorageManager::CATEGORY_WEB_BUILDER) . '/';
 		$extension = pathinfo($this->uploadedImage->fullSizePath, PATHINFO_EXTENSION);
 		if ((isset($_REQUEST['size'])) && $extension != 'svg') {
 			$size = $_REQUEST['size'];
