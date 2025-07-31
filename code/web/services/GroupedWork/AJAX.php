@@ -1219,7 +1219,16 @@ class GroupedWork_AJAX extends JSON_Action {
 					}
 
 					global $configArray;
-					$destFullPath = $configArray['Site']['coverPath'] . '/original/' . $id . '.png';
+					require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+					$storageManager = StorageManager::getInstance();
+					
+					// Determine the correct subcategory based on record type
+					if ($recordType === 'grouped_work') {
+						$destFullPath = $storageManager->getUserDataPath(StorageManager::CATEGORY_COVERS, StorageManager::COVER_GROUPED_WORK, 'original') . '/' . $id . '.png';
+					} else {
+						$destFullPath = $storageManager->getUserDataPath(StorageManager::CATEGORY_COVERS, StorageManager::COVER_RECORDS, 'original') . '/' . $id . '.png';
+					}
+					
 					require_once ROOT_DIR . '/sys/Covers/CoverImageUtils.php';
 
 					/** @noinspection SpellCheckingInspection */
@@ -1229,7 +1238,7 @@ class GroupedWork_AJAX extends JSON_Action {
 						if ($res) {
 							$id = $_REQUEST['id'];
 							$recordType = 'grouped_work';
-							$destFullPath = $configArray['Site']['coverPath'] . '/original/' . $id . '.png';
+							$destFullPath = $storageManager->getUserDataPath(StorageManager::CATEGORY_COVERS, StorageManager::COVER_GROUPED_WORK, 'original') . '/' . $id . '.png';
 							$res = formatImageUpload($uploadedFile, $destFullPath, $id, $recordType);
 							$result = $res;
 						}else{
@@ -1257,7 +1266,7 @@ class GroupedWork_AJAX extends JSON_Action {
 								if ($hasDefaultCover->find(true)){
 									$id = substr(strstr($record->id, ':'), 1);
 									$recordType = $record->source;
-									$destFullPath = $configArray['Site']['coverPath'] . '/original/' . $id . '.png';
+									$destFullPath = $storageManager->getUserDataPath(StorageManager::CATEGORY_COVERS, StorageManager::COVER_RECORDS, 'original') . '/' . $id . '.png';
 									$res = formatImageUpload($uploadedFile, $destFullPath, $id, $recordType);
 									if ($res){
 										continue;
@@ -1287,7 +1296,7 @@ class GroupedWork_AJAX extends JSON_Action {
 								if (sizeof($relatedRecords) == 1) {
 									$id = substr(strstr($relatedRecords[0]->id, ':'), 1);
 									$recordType = $relatedRecords[0]->source;
-									$destFullPath = $configArray['Site']['coverPath'] . '/original/' . $id . '.png';
+									$destFullPath = $storageManager->getUserDataPath(StorageManager::CATEGORY_COVERS, StorageManager::COVER_RECORDS, 'original') . '/' . $id . '.png';
 									$result = formatImageUpload($uploadedFile, $destFullPath, $id, $recordType);
 									if ($result['success'] = true){
 										$result['message'] = translate([
@@ -1399,7 +1408,15 @@ class GroupedWork_AJAX extends JSON_Action {
 					$id = $recordId;
 				}
 				global $configArray;
-				$destFullPath = $configArray['Site']['coverPath'] . '/original/' . $id . '.png';
+				require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+				$storageManager = StorageManager::getInstance();
+				
+				// Determine the correct subcategory based on record type
+				if ($recordType === 'grouped_work') {
+					$destFullPath = $storageManager->getUserDataPath(StorageManager::CATEGORY_COVERS, StorageManager::COVER_GROUPED_WORK, 'original') . '/' . $id . '.png';
+				} else {
+					$destFullPath = $storageManager->getUserDataPath(StorageManager::CATEGORY_COVERS, StorageManager::COVER_RECORDS, 'original') . '/' . $id . '.png';
+				}
 				$ext = pathinfo($filename, PATHINFO_EXTENSION);
 				if ($ext == "jpg" or $ext == "png" or $ext == "gif" or $ext == "jpeg") {
 					$upload = file_put_contents($destFullPath, $uploadedFile);
@@ -1408,7 +1425,7 @@ class GroupedWork_AJAX extends JSON_Action {
 						if ($upload) {
 							$id = $_REQUEST['id'];
 							$recordType = 'grouped_work';
-							$destFullPath = $configArray['Site']['coverPath'] . '/original/' . $id . '.png';
+							$destFullPath = $storageManager->getUserDataPath(StorageManager::CATEGORY_COVERS, StorageManager::COVER_GROUPED_WORK, 'original') . '/' . $id . '.png';
 							$upload = file_put_contents($destFullPath, $uploadedFile);
 							if ($upload){
 								require_once ROOT_DIR . '/sys/Covers/BookCoverInfo.php';
@@ -2542,7 +2559,24 @@ class GroupedWork_AJAX extends JSON_Action {
 			global $configArray;
 			$bookCoverPath = $configArray['Site']['coverPath'];
 			$permanentId = $bookcoverInfo->getRecordId();
-
+			$recordType = $bookcoverInfo->getRecordType();
+			
+			require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+			$storageManager = StorageManager::getInstance();
+			
+			// Determine subcategory based on record type
+			$subcategory = ($recordType === 'grouped_work') ? StorageManager::COVER_GROUPED_WORK : StorageManager::COVER_RECORDS;
+			
+			// Delete from new subcategory structure
+			$sizes = ['original', 'small', 'medium', 'large'];
+			foreach ($sizes as $size) {
+				$newPath = $storageManager->getUserDataPath(StorageManager::CATEGORY_COVERS, $subcategory, $size) . '/' . $permanentId . '.png';
+				if (file_exists($newPath)) {
+					unlink($newPath);
+				}
+			}
+			
+			// Also delete from legacy structure for backward compatibility
 			$originalUploadedImage = $bookCoverPath . '/original/' . $permanentId . '.png';
 			if (file_exists($originalUploadedImage)) {
 				unlink($originalUploadedImage);

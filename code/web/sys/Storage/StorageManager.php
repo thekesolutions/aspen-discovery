@@ -32,6 +32,12 @@ class StorageManager {
     const CATEGORY_REWARDS = 'rewards';
     const CATEGORY_LEGACY = 'legacy';
     
+    // Cover subcategories for better organization
+    const COVER_RECORDS = 'records';
+    const COVER_GROUPED_WORK = 'grouped_work';
+    const COVER_LISTS = 'lists';
+    const COVER_SERIES = 'series';
+    
     // Image subcategories
     const CATEGORY_THEMES = 'themes';      // Theme images (logos, favicons, etc.)
     const CATEGORY_FACETS = 'facets';      // Facet category images
@@ -219,7 +225,35 @@ class StorageManager {
             $this->getUserDataPath(self::CATEGORY_FILES, 'web_builder_pdf'),
             $this->getUserDataPath(self::CATEGORY_FILES, 'record_pdfs'),
             $this->getUserDataPath(self::CATEGORY_FONTS),
+            
+            // Cover directories with subcategories
             $this->getUserDataPath(self::CATEGORY_COVERS),
+            // Records covers
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_RECORDS),
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_RECORDS, 'original'),
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_RECORDS, 'thumbnail'),
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_RECORDS, 'small'),
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_RECORDS, 'medium'),
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_RECORDS, 'large'),
+            // Grouped work covers
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_GROUPED_WORK),
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_GROUPED_WORK, 'original'),
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_GROUPED_WORK, 'thumbnail'),
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_GROUPED_WORK, 'small'),
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_GROUPED_WORK, 'medium'),
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_GROUPED_WORK, 'large'),
+            // List covers
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_LISTS),
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_LISTS, 'original'),
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_LISTS, 'thumbnail'),
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_LISTS, 'small'),
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_LISTS, 'medium'),
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_LISTS, 'large'),
+            // Series covers
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_SERIES),
+            $this->getUserDataPath(self::CATEGORY_COVERS, self::COVER_SERIES, 'original'),
+            
+            // Legacy cover directories (for backward compatibility)
             $this->getUserDataPath(self::CATEGORY_COVERS, 'original'),
             $this->getUserDataPath(self::CATEGORY_COVERS, 'thumbnail'),
             $this->getUserDataPath(self::CATEGORY_COVERS, 'medium'),

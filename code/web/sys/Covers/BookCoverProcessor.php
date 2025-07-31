@@ -1976,11 +1976,22 @@ class BookCoverProcessor {
 	}
 
 	private function getUploadedListCover($id) {
-		$uploadedImage = $this->bookCoverPath . '/original/lists/' . $id . '.png';
+		// Try new lists subcategory structure first
+		require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+		$storageManager = StorageManager::getInstance();
+		$newUploadedImage = $storageManager->getUserDataPath(StorageManager::CATEGORY_COVERS, StorageManager::COVER_LISTS, 'original') . '/' . $id . '.png';
+		
 		$source = $this->bookCoverInfo->imageSource ?? '';
-		if (($source == 'upload' || $source == '') && file_exists($uploadedImage)) {
-			return $this->processImageURL($source, $uploadedImage);
+		if (($source == 'upload' || $source == '') && file_exists($newUploadedImage)) {
+			return $this->processImageURL($source, $newUploadedImage);
 		}
+		
+		// Fallback to legacy structure for backward compatibility
+		$legacyUploadedImage = $this->bookCoverPath . '/original/lists/' . $id . '.png';
+		if (($source == 'upload' || $source == '') && file_exists($legacyUploadedImage)) {
+			return $this->processImageURL($source, $legacyUploadedImage);
+		}
+		
 		return false;
 	}
 
@@ -2026,9 +2037,19 @@ class BookCoverProcessor {
 		}
 
 		if ($okToLoad) {
-			$uploadedImage = $this->bookCoverPath . '/original/' . $permanentId . '.png';
-			if (file_exists($uploadedImage)) {
-				return $this->processImageURL('upload', $uploadedImage);
+			// Try new grouped_work subcategory structure first
+			require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+			$storageManager = StorageManager::getInstance();
+			$newUploadedImage = $storageManager->getUserDataPath(StorageManager::CATEGORY_COVERS, StorageManager::COVER_GROUPED_WORK, 'original') . '/' . $permanentId . '.png';
+			
+			if (file_exists($newUploadedImage)) {
+				return $this->processImageURL('upload', $newUploadedImage);
+			}
+			
+			// Fallback to legacy structure for backward compatibility
+			$legacyUploadedImage = $this->bookCoverPath . '/original/' . $permanentId . '.png';
+			if (file_exists($legacyUploadedImage)) {
+				return $this->processImageURL('upload', $legacyUploadedImage);
 			} elseif (strlen($permanentId) == 40) {
 				$permanentId = substr($permanentId, 0, 36);
 				$uploadedImage = $this->bookCoverPath . '/original/' . $permanentId . '.png';
@@ -2048,9 +2069,19 @@ class BookCoverProcessor {
 			] = explode(':', $id);
 		}
 		if ($this->bookCoverInfo->getRecordType() != 'series' && $this->bookCoverInfo->getRecordType() != 'seriesMember' && $this->bookCoverInfo->getRecordType() != 'list') {
-			$uploadedImage = $this->bookCoverPath . '/original/' . $id . '.png';
-			if (file_exists($uploadedImage)) {
-				return $this->processImageURL('upload', $uploadedImage);
+			// Try new records subcategory structure first
+			require_once ROOT_DIR . '/sys/Storage/StorageManager.php';
+			$storageManager = StorageManager::getInstance();
+			$newUploadedImage = $storageManager->getUserDataPath(StorageManager::CATEGORY_COVERS, StorageManager::COVER_RECORDS, 'original') . '/' . $id . '.png';
+			
+			if (file_exists($newUploadedImage)) {
+				return $this->processImageURL('upload', $newUploadedImage);
+			}
+			
+			// Fallback to legacy structure for backward compatibility
+			$legacyUploadedImage = $this->bookCoverPath . '/original/' . $id . '.png';
+			if (file_exists($legacyUploadedImage)) {
+				return $this->processImageURL('upload', $legacyUploadedImage);
 			}
 		}
 
