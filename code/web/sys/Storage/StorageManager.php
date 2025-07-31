@@ -56,23 +56,10 @@ class StorageManager {
     private function loadConfiguration() {
         global $configArray, $serverName;
         
-        // Ensure serverName is available - fallback for cron contexts
-        if (empty($serverName) || $serverName === 'default') {
-            // Try to get from environment first
-            if (!empty($_ENV['SITE_NAME'])) {
-                $serverName = $_ENV['SITE_NAME'];
-            } elseif (!empty(getenv('SITE_NAME'))) {
-                $serverName = getenv('SITE_NAME');
-            } else {
-                // Last resort: try to extract from config directory structure
-                $configDir = $_ENV['CONFIG_DIRECTORY'] ?? '';
-                if (!empty($configDir) && preg_match('/sites\/([^\/]+)/', $configDir, $matches)) {
-                    $serverName = $matches[1];
-                } else {
-                    error_log("StorageManager: Unable to determine server name for storage paths");
-                    $serverName = 'localhost'; // Safe fallback
-                }
-            }
+        // ConfigArray.php should have already set $serverName properly
+        // If it's still empty, that's a configuration error that should be fixed there
+        if (empty($serverName)) {
+            error_log("StorageManager: serverName is empty - this indicates a ConfigArray.php issue");
         }
         
         // Default configuration - all user data directly in the data directory
@@ -80,13 +67,13 @@ class StorageManager {
             'backend_type' => 'local', // Only local storage supported
             'base_paths' => [
                 // ALL user-uploaded data goes directly in the main data directory
-                self::TYPE_USER_DATA => $_ENV['ASPEN_USER_DATA_PATH'] ?? "/data/aspen-discovery/{$serverName}",
+                self::TYPE_USER_DATA => getenv('ASPEN_USER_DATA_PATH') ?: "/data/aspen-discovery/{$serverName}",
                 
                 // Application static assets (read-only)
-                self::TYPE_STATIC_ASSETS => $_ENV['ASPEN_ASSETS_PATH'] ?? "/usr/local/aspen-discovery/code/web/assets",
+                self::TYPE_STATIC_ASSETS => getenv('ASPEN_ASSETS_PATH') ?: "/usr/local/aspen-discovery/code/web/assets",
                 
                 // Temporary storage (always local)
-                self::TYPE_TEMPORARY => $_ENV['ASPEN_TEMP_PATH'] ?? "/tmp/aspen-uploads",
+                self::TYPE_TEMPORARY => getenv('ASPEN_TEMP_PATH') ?: "/tmp/aspen-uploads",
             ],
             'permissions' => [
                 'directories' => 0755,

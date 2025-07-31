@@ -165,6 +165,9 @@ function readConfig() {
 			$fullServerName = $_SERVER['SERVER_NAME'];
 		} elseif (count($_SERVER['argv']) > 1) {
 			$fullServerName = $_SERVER['argv'][1];
+		} elseif (!empty(getenv('SITE_NAME'))) {
+			// Fallback for cron context - use SITE_NAME environment variable
+			$fullServerName = getenv('SITE_NAME');
 		} else {
 			die('No server name could be found to load configuration');
 		}
