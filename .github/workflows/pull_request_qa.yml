@@ -33,46 +33,55 @@ jobs:
 
       - name: Check for spaces instead of tabs
         run: |
-          set -x  # Enable debug output
-          echo "=== DEBUG: Starting check ==="
+          echo "Starting tabs vs spaces check..."
           
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          HEAD_SHA="${{ github.sha }}"
-          
-          echo "BASE_SHA: $BASE_SHA"
-          echo "HEAD_SHA: $HEAD_SHA"
-          
-          echo "=== DEBUG: Testing git diff ==="
-          git diff --name-only $BASE_SHA..$HEAD_SHA || echo "Git diff failed"
-          
-          echo "=== DEBUG: Looking for files ==="
-          MODIFIED_FILES=$(git diff --name-only $BASE_SHA..$HEAD_SHA | grep -E '\.(php|js|java)$' | grep -v 'code/aspen_app' || true)
-          
-          echo "MODIFIED_FILES: '$MODIFIED_FILES'"
-          
-          if [ -z "$MODIFIED_FILES" ]; then
-            echo "No files to check"
-            exit 0
+          # For pull requests, compare against the base branch
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF="origin/${{ github.event.pull_request.base.ref }}"
+            echo "PR mode: comparing against $BASE_REF"
+          else
+            BASE_REF="HEAD~1"
+            echo "Push mode: comparing against $BASE_REF"
           fi
           
-          echo "=== DEBUG: Checking files ==="
+          # Find files modified
+          MODIFIED_FILES=$(git diff --name-only $BASE_REF | grep -E '\.(php|js|java)$' | grep -v 'code/aspen_app' || true)
+          
+          echo "Modified files to check:"
+          echo "$MODIFIED_FILES"
+          
+          if [ -z "$MODIFIED_FILES" ]; then
+            echo "✅ No PHP/JS/Java files modified, skipping check"
+            exit 0
+          fi
+
+          EXIT_CODE=0
+          ERROR_COUNT=0
+
           for file in $MODIFIED_FILES; do
-            echo "File: $file"
+            echo "Checking file: $file"
             if [[ -f "$file" ]]; then
-              echo "File exists, checking for spaces..."
-              if git diff $BASE_SHA..$HEAD_SHA -- "$file" | grep -q "^+  "; then
-                echo "FOUND SPACES in $file"
-                exit 1
+              # Check for space indentation issues
+              SPACE_LINES=$(git diff $BASE_REF -- "$file" | grep "^+  " | head -3)
+              if [ -n "$SPACE_LINES" ]; then
+                echo "❌ File $file has space indentation issues:"
+                echo "$SPACE_LINES"
+                echo "::error file=$file::File has spaces instead of tabs for indentation"
+                EXIT_CODE=1
+                ((ERROR_COUNT++))
               else
-                echo "No spaces found in $file"
+                echo "✅ $file - OK"
               fi
-            else
-              echo "File $file does not exist"
             fi
           done
-          
-          echo "=== DEBUG: All checks passed ==="
-          exit 0
+
+          if [ $EXIT_CODE -eq 1 ]; then
+            echo "::error::Found $ERROR_COUNT files with space indentation instead of tabs"
+          else
+            echo "✅ All files use proper tab indentation!"
+          fi
+
+          exit $EXIT_CODE
 
   check_create_site_for_docker:
     runs-on: ubuntu-latest
