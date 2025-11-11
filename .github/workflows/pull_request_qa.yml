@@ -7,7 +7,7 @@ on:
 jobs:
   check_release_notes:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout pull request branch
         uses: actions/checkout@v4
@@ -33,39 +33,75 @@ jobs:
 
       - name: Check for spaces instead of tabs
         run: |
-          # Find files that are modified in the pull request
-          MODIFIED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} | grep -v 'code/aspen_app')
+          echo "Starting tabs vs spaces check..."
+          
+          # Use the same diff format as qa-test-tools
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.sha }}"
+          
+          # Find files modified in this PR
+          MODIFIED_FILES=$(git diff --name-only $BASE_SHA..$HEAD_SHA | grep -E '\.(php|js|java)$' | grep -v 'code/aspen_app')
+          
+          if [ -z "$MODIFIED_FILES" ]; then
+            echo "✅ No PHP/JS/Java files modified, skipping check"
+            echo "## 📋 Tabs vs Spaces Check" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **PASSED** - No PHP/JS/Java files were modified" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
 
-          # Loop through each file and check for spaces used instead of tabs
           EXIT_CODE=0
-          declare -A RESULTS
+          ERROR_COUNT=0
+          REPORT_FILE="/tmp/spaces_report.md"
+          
+          # Start building report
+          echo "## 📋 Tabs vs Spaces Check Report" > $REPORT_FILE
+          echo "" >> $REPORT_FILE
+          echo "**Files checked:** $(echo "$MODIFIED_FILES" | wc -l)" >> $REPORT_FILE
+          echo "" >> $REPORT_FILE
+
           for file in $MODIFIED_FILES; do
-            echo "Found modified file: $file";
-            if [[ $file == *.php || $file == *.js || $file == *.java ]]; then
-              DIFF=$(git diff ${{ github.event.pull_request.base.sha }} -- $file)
-              #echo "DIFF: $DIFF"
-              while IFS= read -r RAW_LINE; do
-                if [[ $RAW_LINE =~ ^\+ ]]; then
-                    LINE=$(echo -e "$RAW_LINE" | sed 's/\t/_TAB_/g')
-                    if [[ $LINE =~ ^\+(_TAB_)*[[:space:]][[:space:]]+ ]]; then
-                      echo "Bad Line: $RAW_LINE"
-                      RESULTS[$file]=1
-                      EXIT_CODE=1
-                    fi
-                fi
-              done <<< "$DIFF"
+            if [[ -f "$file" ]]; then
+              # Get problematic lines with line numbers
+              SPACE_ISSUES=$(git diff $BASE_SHA..$HEAD_SHA -- "$file" | grep -n "^+  " | head -5)
+              if [ -n "$SPACE_ISSUES" ]; then
+                echo "❌ **$file**" >> $REPORT_FILE
+                echo '```' >> $REPORT_FILE
+                echo "$SPACE_ISSUES" >> $REPORT_FILE
+                echo '```' >> $REPORT_FILE
+                echo "" >> $REPORT_FILE
+                
+                # Create GitHub annotations for each issue
+                while IFS= read -r line; do
+                  LINE_NUM=$(echo "$line" | cut -d: -f1)
+                  CONTENT=$(echo "$line" | cut -d: -f2-)
+                  echo "::error file=$file,line=$LINE_NUM::Spaces used instead of tabs: $CONTENT"
+                done <<< "$SPACE_ISSUES"
+                
+                EXIT_CODE=1
+                ((ERROR_COUNT++))
+              else
+                echo "✅ **$file** - OK" >> $REPORT_FILE
+              fi
             fi
           done
 
+          # Add summary to report
           if [ $EXIT_CODE -eq 1 ]; then
-            echo "FILES CONTAINING SPACES INSTEAD OF TABS:"
-            for key in "${!RESULTS[@]}"; do
-                echo "$key"
-            done
+            echo "## ❌ Result: FAILED" >> $REPORT_FILE
+            echo "Found **$ERROR_COUNT** files with space indentation issues." >> $REPORT_FILE
+            echo "" >> $REPORT_FILE
+            echo "### 🔧 How to fix:" >> $REPORT_FILE
+            echo "1. Configure your editor to show whitespace" >> $REPORT_FILE
+            echo "2. Replace leading spaces with tabs in the flagged files" >> $REPORT_FILE
+            echo "3. Set your editor to use tabs for indentation" >> $REPORT_FILE
           else
-            echo "NO SPACES FOUND!";
+            echo "## ✅ Result: PASSED" >> $REPORT_FILE
+            echo "All files use proper tab indentation!" >> $REPORT_FILE
           fi
-
+          
+          # Output report to job summary
+          cat $REPORT_FILE >> $GITHUB_STEP_SUMMARY
+          
           exit $EXIT_CODE
 
   check_create_site_for_docker:
