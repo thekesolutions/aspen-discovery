@@ -35,14 +35,9 @@ jobs:
         run: |
           echo "Starting tabs vs spaces check..."
           
-          # For pull requests, compare against the base branch
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE_REF="origin/${{ github.event.pull_request.base.ref }}"
-            echo "PR mode: comparing against $BASE_REF"
-          else
-            BASE_REF="HEAD~1"
-            echo "Push mode: comparing against $BASE_REF"
-          fi
+          # Use standard GitHub base_ref
+          BASE_REF="origin/${{ github.base_ref }}"
+          echo "Comparing against: $BASE_REF"
           
           # Find files modified
           MODIFIED_FILES=$(git diff --name-only $BASE_REF | grep -E '\.(php|js|java)$' | grep -v 'code/aspen_app' || true)
