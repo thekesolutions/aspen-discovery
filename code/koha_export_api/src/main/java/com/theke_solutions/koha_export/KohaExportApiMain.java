@@ -157,7 +157,7 @@ public class KohaExportApiMain {
 
 				// Biblio record sync via API
 				RecordSync recordSync = new RecordSync(
-						kohaApi, dbConn, serverName, configIni, indexingProfile, logEntry, logger);
+						kohaApi, dbConn, serverName, configIni, indexingProfile, kohaVersion, logEntry, logger);
 				numChanges = recordSync.syncRecords();
 
 				logEntry.setFinished();

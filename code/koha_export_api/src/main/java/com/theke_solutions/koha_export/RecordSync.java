@@ -26,12 +26,19 @@ import java.util.*;
  *
  * Replaces the direct-DB updateRecords()/updateBibRecord() flow with:
  * - GET /biblios (MARCXML, timestamp-filtered, paginated)
- * - GET /biblios/{id}/items (JSON with checkout embed)
+ * - GET /biblios/{id}/items (JSON with checkout embed) — only for Koha < 25.11
  * - GET /deleted/biblios (timestamp-filtered)
  * - GET /authorities (MARCXML, timestamp-filtered)
+ *
+ * Koha 25.11+ supports x-koha-embed: items on the biblios endpoint,
+ * which embeds 952 item fields directly into the MARCXML response.
+ * This eliminates the per-record item fetch (N+1 → 1 request per page).
  */
 public class RecordSync {
 	private static final SimpleDateFormat KOHA_TIMESTAMP_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+
+	// Koha 26.05 adds x-koha-embed: items support on GET /biblios
+	private static final float KOHA_VERSION_EMBED_ITEMS = 26.05f;
 
 	private final KohaApiClient api;
 	private final Connection dbConn;
@@ -40,12 +47,14 @@ public class RecordSync {
 	private final IndexingProfile indexingProfile;
 	private final IlsExtractLogEntry logEntry;
 	private final Logger logger;
+	private final boolean embedItemsSupported;
 
 	private MarcRecordGrouper recordGrouper;
 	private GroupedWorkIndexer indexer;
 
 	public RecordSync(KohaApiClient api, Connection dbConn, String serverName, Ini configIni,
-	                  IndexingProfile indexingProfile, IlsExtractLogEntry logEntry, Logger logger) {
+	                  IndexingProfile indexingProfile, float kohaVersion,
+	                  IlsExtractLogEntry logEntry, Logger logger) {
 		this.api = api;
 		this.dbConn = dbConn;
 		this.serverName = serverName;
@@ -53,6 +62,7 @@ public class RecordSync {
 		this.indexingProfile = indexingProfile;
 		this.logEntry = logEntry;
 		this.logger = logger;
+		this.embedItemsSupported = kohaVersion >= KOHA_VERSION_EMBED_ITEMS;
 	}
 
 	/**
@@ -108,17 +118,24 @@ public class RecordSync {
 		String qFilter = fullUpdate ? "" : "&q=" + urlEncode("{\"timestamp\":{\">\": \"" + sinceTimestamp + "\"}}");
 		String orderBy = "&_order_by=+biblio_id";
 
+		if (embedItemsSupported) {
+			logEntry.addNote("Koha 26.05+: using x-koha-embed: items for batch MARCXML fetch");
+		}
+
 		while (true) {
+			// Koha 25.11+: embed items directly into MARCXML (952 fields included)
+			// Older Koha: plain MARCXML, items fetched per-record below
+			HashMap<String, String> headers = embedItemsSupported ? marcXmlWithItemsHeaders() : marcXmlHeaders();
+
 			WebServiceResponse response = api.get(
 					"/api/v1/biblios?_per_page=" + perPage + "&_page=" + page + qFilter + orderBy,
-					marcXmlHeaders());
+					headers);
 			if (!response.isSuccess()) {
-				if (response.getResponseCode() == 404) break; // no more results
+				if (response.getResponseCode() == 404) break;
 				logEntry.incErrors("Failed to fetch biblios (page " + page + "): " + response.getMessage());
 				break;
 			}
 
-			// Parse the MARCXML collection response
 			List<Record> records = MarcRecordBuilder.parseMarcXmlCollection(response.getMessage(), logger);
 			if (records.isEmpty()) break;
 
@@ -139,7 +156,8 @@ public class RecordSync {
 	}
 
 	/**
-	 * Process a single biblio: fetch items, build 952 fields, save, group, index.
+	 * Process a single biblio: save, group, index.
+	 * If items are not already embedded (Koha < 25.11), fetches them per-record.
 	 */
 	private int processOneBiblio(String biblioId, Record marcRecord) {
 		try {
@@ -153,15 +171,17 @@ public class RecordSync {
 				return 1;
 			}
 
-			// Fetch items and build 952 fields
-			WebServiceResponse itemsResponse = api.get(
-					"/api/v1/biblios/" + biblioId + "/items?_per_page=-1",
-					itemEmbedHeaders());
-			if (itemsResponse.isSuccess()) {
-				JSONArray items = itemsResponse.getJSONResponseAsArray();
-				if (items != null) {
-					for (int i = 0; i < items.length(); i++) {
-						marcRecord.addVariableField(MarcRecordBuilder.buildItemField(items.getJSONObject(i)));
+			// Fetch items only if not already embedded by the API
+			if (!embedItemsSupported) {
+				WebServiceResponse itemsResponse = api.get(
+						"/api/v1/biblios/" + biblioId + "/items?_per_page=-1",
+						itemEmbedHeaders());
+				if (itemsResponse.isSuccess()) {
+					JSONArray items = itemsResponse.getJSONResponseAsArray();
+					if (items != null) {
+						for (int i = 0; i < items.length(); i++) {
+							marcRecord.addVariableField(MarcRecordBuilder.buildItemField(items.getJSONObject(i)));
+						}
 					}
 				}
 			}
@@ -357,6 +377,13 @@ public class RecordSync {
 	private static HashMap<String, String> marcXmlHeaders() {
 		HashMap<String, String> h = new HashMap<>();
 		h.put("Accept", "application/marcxml+xml");
+		return h;
+	}
+
+	private static HashMap<String, String> marcXmlWithItemsHeaders() {
+		HashMap<String, String> h = new HashMap<>();
+		h.put("Accept", "application/marcxml+xml");
+		h.put("x-koha-embed", "items");
 		return h;
 	}
 
