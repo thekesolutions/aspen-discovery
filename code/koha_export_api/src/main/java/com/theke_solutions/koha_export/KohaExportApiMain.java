@@ -129,12 +129,29 @@ public class KohaExportApiMain {
 
 				updatePhase(StatusServer.ProcessState.RUNNING, "syncing_reference_data");
 
-				// TODO: sync branches via GET /api/v1/libraries
-				// TODO: sync patron categories via GET /api/v1/patron_categories
-				// TODO: sync authorized values via GET /api/v1/authorised_value_categories
-				// TODO: sync item types via GET /api/v1/item_types
-				// TODO: sync holds via GET /api/v1/holds
-				// NOTE: volumes, course reserves, covers, authorities have no Koha API yet
+				float kohaVersion = KohaVersionSync.getKohaVersion(kohaApi, logger);
+				logEntry.addNote("Koha version: " + kohaVersion);
+				logEntry.saveResults();
+
+				long indexingProfileId = indexingProfile.getId();
+				long accountProfileId = loadAccountProfileId(dbConn);
+
+				LibrarySync.syncLibraries(kohaApi, dbConn, indexingProfileId, logger, logEntry);
+				logEntry.addNote("Finished updating branch information");
+				logEntry.saveResults();
+
+				PatronCategorySync.syncPatronCategories(kohaApi, dbConn, accountProfileId, logger, logEntry);
+				logEntry.addNote("Finished updating patron types");
+				logEntry.saveResults();
+
+				AuthorisedValueSync.syncTranslationMaps(kohaApi, dbConn, indexingProfileId, indexingProfile, logger, logEntry);
+				ItemTypeSync.syncItemTypes(kohaApi, dbConn, indexingProfileId, logger, logEntry);
+				logEntry.addNote("Finished updating translation maps");
+				logEntry.saveResults();
+
+				HoldsSync.syncHolds(kohaApi, dbConn, logger, logEntry);
+				logEntry.addNote("Finished loading holds");
+				logEntry.saveResults();
 
 				updatePhase(StatusServer.ProcessState.RUNNING, "processing_records");
 
@@ -244,6 +261,19 @@ public class KohaExportApiMain {
 			logger.error("Error loading profile name", e);
 		}
 		return "ils";
+	}
+
+	private static long loadAccountProfileId(Connection dbConn) {
+		try {
+			PreparedStatement stmt = dbConn.prepareStatement(
+					"SELECT id FROM account_profiles WHERE ils = 'koha' LIMIT 1"
+			);
+			ResultSet rs = stmt.executeQuery();
+			if (rs.next()) return rs.getLong("id");
+		} catch (SQLException e) {
+			logger.error("Error loading account profile id", e);
+		}
+		return 0;
 	}
 
 	private static void updatePhase(StatusServer.ProcessState state, String phase) {
