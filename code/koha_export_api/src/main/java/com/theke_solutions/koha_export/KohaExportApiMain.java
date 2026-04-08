@@ -155,10 +155,10 @@ public class KohaExportApiMain {
 
 				updatePhase(StatusServer.ProcessState.RUNNING, "processing_records");
 
-				// TODO: implement API-based record sync
-				// GET /api/v1/biblios — with pagination and timestamp filtering
-				// GET /api/v1/biblios/{id} with Accept: application/marcxml+xml
-				// GET /api/v1/biblios/{id}/items
+				// Biblio record sync via API
+				RecordSync recordSync = new RecordSync(
+						kohaApi, dbConn, serverName, configIni, indexingProfile, logEntry, logger);
+				numChanges = recordSync.syncRecords();
 
 				logEntry.setFinished();
 				logger.info(new Date() + ": Finished Koha API Export");
