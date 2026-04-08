@@ -1,0 +1,48 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'com.theke_solutions'
+version = '0.1.0'
+sourceCompatibility = '11'
+
+application {
+    mainClass = 'com.theke_solutions.koha_export.KohaExportApiMain'
+}
+
+repositories {
+    mavenCentral()
+}
+
+// Aspen shared libraries (source + vendored JARs)
+def sharedLibDir = "${rootProject.projectDir}/../java_shared_libraries"
+def reindexerDir = "${rootProject.projectDir}/../reindexer"
+
+sourceSets {
+    main {
+        java {
+            // Include Aspen shared library sources (config, indexing, net, logging, marc, etc.)
+            srcDir "${sharedLibDir}/src"
+        }
+    }
+}
+
+dependencies {
+    // JARs vendored in java_shared_libraries
+    implementation fileTree(dir: sharedLibDir, include: '*.jar')
+    // Reindexer (for GroupedWorkIndexer, MarcRecordGrouper)
+    implementation files("${reindexerDir}/reindexer.jar")
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': application.mainClass
+    }
+    // Fat JAR: bundle all dependencies
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    archiveFileName = 'koha_export.jar'
+}
