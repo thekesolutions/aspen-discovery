@@ -1,4 +1,4 @@
-package com.theke_solutions.koha_export;
+package com.turning_leaf_technologies.koha_export;
 
 import com.turning_leaf_technologies.indexing.IlsExtractLogEntry;
 import com.turning_leaf_technologies.indexing.IndexingProfile;
@@ -35,10 +35,16 @@ import java.util.*;
  * This eliminates the per-record item fetch (N+1 → 1 request per page).
  */
 public class RecordSync {
-	private static final SimpleDateFormat KOHA_TIMESTAMP_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+	// Koha's RFC3339 parser rejects timestamps without a timezone designator.
+	private static final SimpleDateFormat KOHA_TIMESTAMP_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+	static {
+		KOHA_TIMESTAMP_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
+	}
 
-	// Koha 26.05 adds x-koha-embed: items support on GET /biblios
-	private static final float KOHA_VERSION_EMBED_ITEMS = 26.05f;
+	// GET /biblios has no x-koha-embed parameter at all (confirmed against the live
+	// swagger spec: /biblios and /biblios/{id} both lack it; only /biblios/{id}/items
+	// and /deleted/biblios support embedding). Items are always fetched per-record below.
+	private static final float KOHA_VERSION_EMBED_ITEMS = Float.MAX_VALUE;
 
 	private final KohaApiClient api;
 	private final Connection dbConn;
@@ -103,7 +109,7 @@ public class RecordSync {
 		// Update timestamps
 		if (fullUpdate) {
 			indexingProfile.updateLastChangeProcessed(dbConn, logEntry);
-		} else if (logEntry.getNumErrors() == 0) {
+		} else if (!logEntry.hasErrors()) {
 			indexingProfile.updateLastChangeProcessed(dbConn, logEntry);
 		}
 
@@ -115,7 +121,8 @@ public class RecordSync {
 		int page = 1;
 		int perPage = 100;
 
-		String qFilter = fullUpdate ? "" : "&q=" + urlEncode("{\"timestamp\":{\">\": \"" + sinceTimestamp + "\"}}");
+		// "me." disambiguates from biblioitems.timestamp, which the list endpoint prefetches/joins.
+		String qFilter = fullUpdate ? "" : "&q=" + urlEncode("{\"me.timestamp\":{\">\": \"" + sinceTimestamp + "\"}}");
 		String orderBy = "&_order_by=+biblio_id";
 
 		if (embedItemsSupported) {
@@ -132,8 +139,29 @@ public class RecordSync {
 					headers);
 			if (!response.isSuccess()) {
 				if (response.getResponseCode() == 404) break;
-				logEntry.incErrors("Failed to fetch biblios (page " + page + "): " + response.getMessage());
-				break;
+
+				// A single malformed MARC record (e.g. invalid control chars) makes Koha fail
+				// the whole batch response. Fall back to fetching this page's records one at a
+				// time so the rest of the page — and all subsequent pages — aren't blocked.
+				logEntry.addNote("Batch fetch failed for biblios page " + page + ", falling back to per-record fetch: " + response.getMessage());
+				List<Integer> pageIds = fetchBiblioIdsForPage(page, perPage, qFilter, orderBy);
+				if (pageIds == null) {
+					logEntry.incErrors("Failed to fetch biblios (page " + page + "): " + response.getMessage());
+					break;
+				}
+				for (int id : pageIds) {
+					Record marcRecord = MarcRecordBuilder.buildRecord(api, id, logger);
+					if (marcRecord == null) {
+						logEntry.incErrors("Failed to fetch biblio " + id + ", skipping");
+						logEntry.incSkipped();
+						continue;
+					}
+					processed += processOneBiblio(String.valueOf(id), marcRecord);
+				}
+				logEntry.saveResults();
+				if (pageIds.size() < perPage) break;
+				page++;
+				continue;
 			}
 
 			List<Record> records = MarcRecordBuilder.parseMarcXmlCollection(response.getMessage(), logger);
@@ -215,7 +243,9 @@ public class RecordSync {
 		int page = 1;
 		int perPage = 100;
 
-		String qFilter = fullUpdate ? "" : "&q=" + urlEncode("{\"timestamp\":{\">\": \"" + sinceTimestamp + "\"}}");
+		// Koha::Old::Biblio maps the DB "timestamp" column to "deleted_on" on the API.
+		// "me." disambiguates from biblioitems.timestamp, which the deleted-biblios list also joins.
+		String qFilter = fullUpdate ? "" : "&q=" + urlEncode("{\"me.deleted_on\":{\">\": \"" + sinceTimestamp + "\"}}");
 
 		while (true) {
 			WebServiceResponse response = api.get(
@@ -256,12 +286,11 @@ public class RecordSync {
 		try {
 			PreparedStatement stmt = dbConn.prepareStatement(
 					"SELECT identifier FROM record_identifiers_to_reload " +
-					"WHERE processed = 0 AND type = 'ils' AND source = ?");
-			stmt.setString(1, indexingProfile.getName());
+					"WHERE processed = 0 AND type = 'ils'");
 			ResultSet rs = stmt.executeQuery();
 
 			PreparedStatement markProcessed = dbConn.prepareStatement(
-					"UPDATE record_identifiers_to_reload SET processed = 1 WHERE identifier = ? AND type = 'ils' AND source = ?");
+					"UPDATE record_identifiers_to_reload SET processed = 1 WHERE identifier = ? AND type = 'ils'");
 
 			while (rs.next()) {
 				String id = rs.getString("identifier");
@@ -279,7 +308,6 @@ public class RecordSync {
 				}
 
 				markProcessed.setString(1, id);
-				markProcessed.setString(2, indexingProfile.getName());
 				markProcessed.executeUpdate();
 			}
 		} catch (SQLException e) {
@@ -295,7 +323,8 @@ public class RecordSync {
 		int page = 1;
 		int perPage = 100;
 
-		String qFilter = fullUpdate ? "" : "&q=" + urlEncode("{\"modification_date\":{\">\": \"" + sinceTimestamp + "\"}}");
+		// Koha::Authority maps the DB "modification_time" column to "modified_date" on the API.
+		String qFilter = fullUpdate ? "" : "&q=" + urlEncode("{\"modified_date\":{\">\": \"" + sinceTimestamp + "\"}}");
 
 		while (true) {
 			WebServiceResponse response = api.get(
@@ -372,6 +401,34 @@ public class RecordSync {
 			indexer.close();
 			indexer = null;
 		}
+	}
+
+	/**
+	 * Fetches just the biblio_ids for a page via the JSON representation, which doesn't
+	 * decode MARC metadata and so succeeds even when the MARCXML batch fetch fails on a
+	 * malformed record. Returns null on failure (distinct from an empty/short last page).
+	 */
+	private List<Integer> fetchBiblioIdsForPage(int page, int perPage, String qFilter, String orderBy) {
+		WebServiceResponse response = api.get(
+				"/api/v1/biblios?_per_page=" + perPage + "&_page=" + page + qFilter + orderBy,
+				jsonHeaders());
+		if (!response.isSuccess()) return null;
+
+		JSONArray bibs = response.getJSONResponseAsArray();
+		if (bibs == null) return null;
+
+		List<Integer> ids = new ArrayList<>();
+		for (int i = 0; i < bibs.length(); i++) {
+			int id = bibs.getJSONObject(i).optInt("biblio_id", 0);
+			if (id > 0) ids.add(id);
+		}
+		return ids;
+	}
+
+	private static HashMap<String, String> jsonHeaders() {
+		HashMap<String, String> h = new HashMap<>();
+		h.put("Accept", "application/json");
+		return h;
 	}
 
 	private static HashMap<String, String> marcXmlHeaders() {

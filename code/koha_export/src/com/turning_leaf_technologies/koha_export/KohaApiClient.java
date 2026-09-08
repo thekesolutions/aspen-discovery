@@ -1,4 +1,4 @@
-package com.theke_solutions.koha_export;
+package com.turning_leaf_technologies.koha_export;
 
 import com.turning_leaf_technologies.net.NetworkUtils;
 import com.turning_leaf_technologies.net.WebServiceResponse;
@@ -44,7 +44,7 @@ public class KohaApiClient {
 		// Use the full 11-param overload — the 10-param one has a bug that drops headers
 		WebServiceResponse response = NetworkUtils.postToURL(
 				tokenUrl, postData, "application/x-www-form-urlencoded",
-				null, logger, null, 10000, 30000, null, null, true
+				null, logger, null, 10000, 30000, StandardCharsets.UTF_8, null, true
 		);
 
 		if (!response.isSuccess()) {
@@ -105,7 +105,7 @@ public class KohaApiClient {
 		HashMap<String, String> headers = authHeaders();
 		return NetworkUtils.postToURL(
 				baseUrl + path, body, contentType, null, logger,
-				null, 10000, 60000, null, headers, true
+				null, 10000, 60000, StandardCharsets.UTF_8, headers, true
 		);
 	}
 
