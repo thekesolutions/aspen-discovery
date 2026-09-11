@@ -88,6 +88,24 @@ function getUpdates26_07_02(): array {
 			]
 		], //add_open_archives_record_cover_url
 
+		//lucas
+		'header_background_image_height' => [
+			'title' => 'Header Background Image Height',
+			'description' => 'Add headerBackgroundImageHeight to themes so the header can have an explicit height independent of the Logo image size.',
+			'continueOnError' => false,
+			'sql' => [
+				'ALTER TABLE themes ADD COLUMN headerBackgroundImageHeight VARCHAR(10) DEFAULT NULL'
+			]
+		], //header_background_image_height
+		'header_background_image_adapt_height' => [
+			'title' => 'Header Background Image Adapt Height',
+			'description' => 'Add headerBackgroundImageAdaptHeight to themes so the header can size itself to the background image\'s own proportions instead of a fixed height.',
+			'continueOnError' => false,
+			'sql' => [
+				'ALTER TABLE themes ADD COLUMN headerBackgroundImageAdaptHeight TINYINT(1) DEFAULT 0'
+			]
+		], //header_background_image_adapt_height
+
 		//tomas
 
 		// stephen
