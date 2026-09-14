@@ -140,6 +140,7 @@ class Theme extends DataObject {
 	public $footerBackgroundImage;
 	public $footerBackgroundImageSize;
 	public $footerBackgroundImageRepeat;
+	public $hideAspenVersion;
 
 	//Primary color is used for the search bar
 	public static $defaultPrimaryBackgroundColor = '#0a7589';
@@ -1137,6 +1138,14 @@ class Theme extends DataObject {
 				'required' => false,
 				'hideInLists' => true,
 				'default' => 'no-repeat',
+			],
+			'hideAspenVersion' => [
+				'property' => 'hideAspenVersion',
+				'type' => 'checkbox',
+				'label' => 'Hide Aspen Version in Footer',
+				'description' => 'Hide the "v. X.X.X" Aspen Discovery version number normally shown in the footer.',
+				'required' => false,
+				'hideInLists' => true,
 			],
 
 			//Primary Color
