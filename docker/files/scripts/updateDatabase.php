@@ -28,6 +28,11 @@ if (!checkDatabaseConnection($aspen_db) || !isDatabaseInitialized($aspen_db)) {
 
 DockerLogger::info("Running pending database updates");
 
+global $interface;
+if (empty($interface)) {
+	$interface = new UInterface();
+}
+
 $systemAPI = new SystemAPI();
 $completedUpdates = $systemAPI->runPendingDatabaseUpdates();
 
@@ -39,8 +44,6 @@ if (!$completedUpdates['success']) {
 }
 
 DockerLogger::info("Updating CSS for all themes");
-global $interface;
-$interface = new UInterface();
 $result = $systemAPI->updateCssForAllThemes();
 if ($result['success'] != true) {
 	DockerLogger::warn("Error updating CSS: " . $result['message']);
