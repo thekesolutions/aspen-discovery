@@ -50,6 +50,7 @@ $variables = [
 	'databaseName' => DockerEnv::get('DATABASE_NAME'),
 	'databaseUser' => DockerEnv::get('DATABASE_USER'),
 	'databasePassword' => DockerEnv::get('DATABASE_PASSWORD'),
+	'fileGroupOwner' => DockerEnv::get('FILE_GROUP_OWNER'),
 ];
 
 if (DockerEnv::usesDefault('DATABASE_PASSWORD')) {

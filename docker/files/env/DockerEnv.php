@@ -24,6 +24,7 @@ class DockerEnv {
 		'DATABASE_NAME' => 'aspen',
 		'DATABASE_USER' => 'aspenusr',
 		'DATABASE_PASSWORD' => 'aspenpasswd',
+		'FILE_GROUP_OWNER' => 'www-data',
 		'DEBUG' => 'false',
 	];
 
