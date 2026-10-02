@@ -27,6 +27,9 @@ USER_NAME="www-data"
 SOURCE_DIR="/usr/local/aspen-discovery"
 APACHE_LOG_DIR="/var/log/apache2"
 
+# Default must match DockerEnv::DEFAULTS and docker-compose.yml
+export SITE_NAME="${SITE_NAME:-aspen}"
+
 # Adjust user ID if needed
 if [[ -n "${LOCAL_USER_ID}" && "${LOCAL_USER_ID}" != "33" ]]; then
 	log_info "Setting UID for ${USER_NAME} to ${LOCAL_USER_ID}"

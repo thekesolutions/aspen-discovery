@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../logger/DockerLogger.php';
+require_once __DIR__ . '/../env/DockerEnv.php';
 DockerLogger::init('BACKEND');
 
 // =============================================================================
@@ -31,49 +32,29 @@ DockerLogger::info("Creating configuration files for site directory: {$siteDir}"
 
 $variables = [
 	//ASPEN
-	'sitename' => getenv('SITE_NAME'),
-	'servername' => preg_replace('~https?://~', '', getenv('URL')),
-	'supportingCompany' => getenv('SUPPORTING_COMPANY') ?? 'ByWater Solutions',
-	'library' => getenv('LIBRARY'),
-	'title' => getenv('TITLE'),
-	'url' => getenv('URL'),
+	'sitename' => DockerEnv::get('SITE_NAME'),
+	'servername' => preg_replace('~https?://~', '', DockerEnv::get('URL')),
+	'supportingCompany' => DockerEnv::get('SUPPORTING_COMPANY'),
+	'library' => DockerEnv::get('LIBRARY'),
+	'title' => DockerEnv::get('TITLE'),
+	'url' => DockerEnv::get('URL'),
 	'configDir' => $siteDir,
-	'solrHost' => getenv('SOLR_HOST') ?? 'localhost',
-	'solrPort' => getenv('SOLR_PORT') ?? 8983,
-	'phpFpmHost' => getenv('PHP_FPM_HOST') ?? 'localhost',
-	'phpFpmPort' => getenv('PHP_FPM_PORT') ?? '9000',
-	'timezone' => getenv('TZ') ?? 'US/Central',
-	'aspenAdminPassword' => getenv('ASPEN_ADMIN_PASSWORD'),
-	'databaseHost' => getenv('DATABASE_HOST') ?? 'localhost',
-	'databasePort' => getenv('DATABASE_PORT') ?? 3306,
-	'databaseName' => getenv('DATABASE_NAME'),
-	'databaseUser' => getenv('DATABASE_USER'),
-	'databasePassword' => getenv('DATABASE_PASSWORD'),
-	'enableKoha' => strtolower(getenv('ENABLE_KOHA')),
+	'solrHost' => DockerEnv::get('SOLR_HOST'),
+	'solrPort' => DockerEnv::get('SOLR_PORT'),
+	'phpFpmHost' => DockerEnv::get('PHP_FPM_HOST'),
+	'phpFpmPort' => DockerEnv::get('PHP_FPM_PORT'),
+	'timezone' => DockerEnv::get('TZ'),
+	'aspenAdminPassword' => DockerEnv::get('ASPEN_ADMIN_PASSWORD'),
+	'databaseHost' => DockerEnv::get('DATABASE_HOST'),
+	'databasePort' => DockerEnv::get('DATABASE_PORT'),
+	'databaseName' => DockerEnv::get('DATABASE_NAME'),
+	'databaseUser' => DockerEnv::get('DATABASE_USER'),
+	'databasePassword' => DockerEnv::get('DATABASE_PASSWORD'),
 ];
 
-// =============================================================================
-// Variable Validation
-// =============================================================================
-
-$mandatory = [
-	'sitename', 'servername', 'solrHost', 'solrPort', 'phpFpmHost', 'phpFpmPort',
-	'configDir', 'timezone', 'aspenAdminPassword', 'databaseHost', 'databasePort',
-	'databaseName', 'databaseUser', 'databasePassword'
-];
-
-$missingVars = [];
-foreach ($variables as $key => $value) {
-	if (in_array($key, $mandatory) && empty($value)) {
-		$missingVars[] = $key;
-	}
+if (DockerEnv::usesDefault('DATABASE_PASSWORD')) {
+	DockerLogger::warn("DATABASE_PASSWORD is not set, using the default database password");
 }
-
-if (!empty($missingVars)) {
-	DockerLogger::error("Missing mandatory variables: " . implode(', ', $missingVars));
-}
-
-DockerLogger::info("Environment variables validated successfully");
 
 // =============================================================================
 // Directory Validation

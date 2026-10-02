@@ -15,9 +15,9 @@ services:
       - net-aspen
     tty: true
     volumes:
-      - ${ASPEN_HOME:-./aspen}/conf:/usr/local/aspen-discovery/sites/${SITE_NAME}
-      - ${ASPEN_HOME:-./aspen}/data:/data/aspen-discovery/${SITE_NAME}
-      - ${ASPEN_HOME:-./aspen}/logs:/var/log/aspen-discovery/${SITE_NAME}
+      - ${ASPEN_HOME:-./aspen}/conf:/usr/local/aspen-discovery/sites/${SITE_NAME:-aspen}
+      - ${ASPEN_HOME:-./aspen}/data:/data/aspen-discovery/${SITE_NAME:-aspen}
+      - ${ASPEN_HOME:-./aspen}/logs:/var/log/aspen-discovery/${SITE_NAME:-aspen}
     depends_on:
       db:
         condition: service_healthy
@@ -31,9 +31,9 @@ services:
     networks:
       - net-aspen
     volumes:
-      - ${ASPEN_HOME:-./aspen}/conf:/usr/local/aspen-discovery/sites/${SITE_NAME}
-      - ${ASPEN_HOME:-./aspen}/data:/data/aspen-discovery/${SITE_NAME}
-      - ${ASPEN_HOME:-./aspen}/logs:/var/log/aspen-discovery/${SITE_NAME}
+      - ${ASPEN_HOME:-./aspen}/conf:/usr/local/aspen-discovery/sites/${SITE_NAME:-aspen}
+      - ${ASPEN_HOME:-./aspen}/data:/data/aspen-discovery/${SITE_NAME:-aspen}
+      - ${ASPEN_HOME:-./aspen}/logs:/var/log/aspen-discovery/${SITE_NAME:-aspen}
     command:
       - apache
     depends_on:
@@ -47,12 +47,12 @@ services:
     networks:
       net-aspen:
         aliases:
-          - ${SITE_NAME}
+          - ${SITE_NAME:-aspen}
     tty: true
     volumes:
-      - ${ASPEN_HOME:-./aspen}/conf:/usr/local/aspen-discovery/sites/${SITE_NAME}
-      - ${ASPEN_HOME:-./aspen}/data:/data/aspen-discovery/${SITE_NAME}
-      - ${ASPEN_HOME:-./aspen}/logs:/var/log/aspen-discovery/${SITE_NAME}
+      - ${ASPEN_HOME:-./aspen}/conf:/usr/local/aspen-discovery/sites/${SITE_NAME:-aspen}
+      - ${ASPEN_HOME:-./aspen}/data:/data/aspen-discovery/${SITE_NAME:-aspen}
+      - ${ASPEN_HOME:-./aspen}/logs:/var/log/aspen-discovery/${SITE_NAME:-aspen}
     command:
       - cron
     depends_on:
@@ -67,8 +67,8 @@ services:
       - .env
     environment:
       - MARIADB_ROOT_PASSWORD=${DATABASE_ROOT_PASSWORD:-password}
-      - MARIADB_USER=${DATABASE_USER:-user123}
-      - MARIADB_PASSWORD=${DATABASE_PASSWORD:-passwd}
+      - MARIADB_USER=${DATABASE_USER:-aspenusr}
+      - MARIADB_PASSWORD=${DATABASE_PASSWORD:-aspenpasswd}
       - MARIADB_DATABASE=${DATABASE_NAME:-aspen}
     volumes:
       - ${ASPEN_HOME:-./aspen}/database:/var/lib/mysql
@@ -88,7 +88,7 @@ services:
       - SOLR_HOST=${SOLR_HOST:-solr}
       - SOLR_DATA_HOME=/var/solr/index-data
     ports:
-      - "${SOLR_PORT}:${SOLR_PORT:-8983}"
+      - "${SOLR_PORT:-8983}:${SOLR_PORT:-8983}"
     volumes:
       - solr-index-data:/var/solr/index-data
     networks:
