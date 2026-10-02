@@ -2,87 +2,117 @@
 
 ## Quick Start
 
-```bash
-curl -O https://raw.githubusercontent.com/Aspen-Discovery/aspen-discovery/26.07.00/docker/docker-compose.yml
-curl -O https://raw.githubusercontent.com/Aspen-Discovery/aspen-discovery/26.07.00/docker/files/env/default.env
-cp default.env .env
-```
+1. Download the compose file and the environment template into an empty directory:
 
-Edit `.env` to set your site name, URL, and admin password, then start:
+   ```bash
+   mkdir aspen-docker && cd aspen-docker
+   ASPEN_VERSION=26.10.00
+   curl -O https://raw.githubusercontent.com/Aspen-Discovery/aspen-discovery/$ASPEN_VERSION/docker/docker-compose.yml
+   curl -o .env https://raw.githubusercontent.com/Aspen-Discovery/aspen-discovery/$ASPEN_VERSION/docker/files/env/default.env
+   ```
 
-```bash
-docker compose up -d
-```
+2. Optionally edit `.env`. Every variable is commented out and has a default, so you can skip this
+   step to try Aspen locally. Before going live, see [Going Live](#going-live).
 
-Wait for initialization to complete:
-```bash
-docker compose logs -f backend
-# Look for: "Starting PHP-FPM in foreground mode..."
-```
+3. Start Aspen and wait for initialization to finish:
 
-Access Aspen at http://localhost:85 (default credentials: `aspen_admin` / `secretPass123`)
+   ```bash
+   docker compose up -d
+   docker compose logs -f backend
+   # Look for: "Starting PHP-FPM in foreground mode..."
+   ```
+
+4. Open http://localhost:85 and log in as `aspen_admin` with password `aspenPass123` (or the
+   `ASPEN_ADMIN_PASSWORD` you set).
+
+The `.env` file must exist, even if it is empty.
+
+## How Configuration Works
+
+All settings come from environment variables in `.env`. A variable that is not set, or set to an
+empty value, uses its default. The backend turns them into Aspen's configuration files:
+
+- **First start:** the site configuration is generated and the database is initialized.
+- **Every start:** variables marked "Every start" below are copied into the existing configuration,
+  so changing them in `.env` and recreating the containers updates Aspen.
+
+Variables marked "First start" are only read when the site or database is created. Changing them
+later has no effect; see the variable's description for how to change it afterwards.
+
+"Every start" variables overwrite the matching configuration values each time, so change them in
+`.env`, not in the configuration files. A variable left out of `.env`, or set to an empty value, is
+reset to its default.
 
 ## Environment Variables
 
-### Site Settings
+### Site
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SITE_NAME` | `aspen` | Site identifier |
-| `URL` | `http://localhost:85` | Public URL |
-| `TITLE` | `Aspen Discovery` | Library title |
-| `LIBRARY` | `Test Library` | Library name |
-| `TZ` | `America/Argentina/Cordoba` | Container and PHP timezone |
-| `ASPEN_ADMIN_PASSWORD` | `secretPass123` | Admin password — **change before going live** |
-| `ASPEN_HOME` | `./aspen` | Directory where instance files are stored (conf, data, logs) |
-| `ASPEN_ADMIN_PASSWORD` | `secretPass123` | Admin password |
-| `SUPPORTING_COMPANY` | `ByWater Solutions` | Support company name |
+| Variable | Default | Applies | Description |
+|----------|---------|---------|-------------|
+| `URL` | `http://localhost:85` | Every start | Public URL users reach Aspen at |
+| `TITLE` | `Aspen Discovery` | Every start | Site title |
+| `LIBRARY` | `Test Library` | Every start | Library name |
+| `TZ` | `UTC` | Every start | Container and Aspen timezone, e.g. `America/Chicago` |
+| `ASPEN_ADMIN_PASSWORD` | `aspenPass123` | First start | Password for `aspen_admin`. Change it later from Aspen's admin interface |
+| `SUPPORTING_COMPANY` | `ByWater Solutions` | First start | Support company shown in Aspen. Change it later in Aspen's system variables |
+| `SITE_NAME` | `aspen` | First start | Site identifier. Changing it later creates a new, empty site |
+| `ASPEN_HOME` | `./aspen` | Every start | Host directory for the instance's conf, data, logs and database |
+| `LOCAL_USER_ID` | | Every start | UID that should own the files in `ASPEN_HOME` (e.g. the output of `id -u`). Unset keeps the container's `www-data` |
+| `DEBUG` | `false` | Every start | Aspen debug mode |
+| `FILE_GROUP_OWNER` | `www-data` | Every start | Group assigned to directories Aspen creates for uploaded files |
 
 ### Database
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DATABASE_HOST` | `db` | MariaDB hostname |
-| `DATABASE_PORT` | `3306` | MariaDB port |
-| `DATABASE_NAME` | `aspen` | Database name |
-| `DATABASE_USER` | `aspenusr` | Database user |
-| `DATABASE_PASSWORD` | `aspenpasswd` | Database password |
-| `DATABASE_ROOT_PASSWORD` | `password` | MariaDB root password |
-| `DATABASE_SSL_MODE` | `DISABLED` | When `DISABLED`, the mariadb CLI client connects with `--skip-ssl` (needed since mariadb-client 11.x defaults to requiring TLS). Set to `REQUIRED` only when the db service has TLS configured, e.g. via a compose overlay adding certs. |
+| Variable | Default | Applies | Description |
+|----------|---------|---------|-------------|
+| `DATABASE_HOST` | `db` | Every start | MariaDB hostname |
+| `DATABASE_PORT` | `3306` | Every start | MariaDB port |
+| `DATABASE_NAME` | `aspen` | Every start | Database name |
+| `DATABASE_USER` | `aspenusr` | Every start | Database user |
+| `DATABASE_PASSWORD` | `aspenpasswd` | Every start | Database password |
+| `DATABASE_ROOT_PASSWORD` | `password` | First start | MariaDB root password |
+| `DATABASE_SSL_MODE` | `DISABLED` | Every start | When `DISABLED`, the mariadb CLI client connects with `--skip-ssl` (needed since mariadb-client 11.x defaults to requiring TLS). Set to `REQUIRED` only when the db service has TLS configured, e.g. via a compose overlay adding certs |
+
+The bundled MariaDB creates the database and user only on its first start. To change
+`DATABASE_NAME`, `DATABASE_USER` or `DATABASE_PASSWORD` afterwards, make the change in MariaDB
+first, then in `.env`.
 
 ### Services
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SOLR_HOST` | `solr` | Solr hostname |
-| `SOLR_PORT` | `8983` | Solr port |
-| `PHP_FPM_HOST` | `backend` | PHP-FPM hostname |
-| `PHP_FPM_PORT` | `9000` | PHP-FPM port |
+| Variable | Default | Applies | Description |
+|----------|---------|---------|-------------|
+| `SOLR_HOST` | `solr` | Every start | Solr hostname |
+| `SOLR_PORT` | `8983` | Every start | Solr port, also published on the host |
+| `PHP_FPM_HOST` | `backend` | First start | PHP-FPM hostname |
+| `PHP_FPM_PORT` | `9000` | First start | PHP-FPM port |
 
 ### Docker Images
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `BACKEND_IMAGE_TAG` | `aspendiscovery/aspen:latest` | Backend image |
-| `SOLR_IMAGE_TAG` | `aspendiscovery/solr:latest` | Solr image |
+| `BACKEND_IMAGE_TAG` | `aspendiscovery/aspen` | Backend image |
+| `SOLR_IMAGE_TAG` | `aspendiscovery/solr` | Solr image |
 | `MARIADB_IMAGE` | `mariadb:10.5` | MariaDB image |
 
-## Updating Configuration
+## Going Live
 
-Environment variables are synced to configuration files on every container start. To apply changes:
+The defaults are meant for trying Aspen locally. Before going live, set at least these in `.env`:
+
+- `URL`, `TITLE` and `LIBRARY` for your site
+- `TZ` for your location
+- `ASPEN_ADMIN_PASSWORD`, `DATABASE_PASSWORD` and `DATABASE_ROOT_PASSWORD`. The defaults are publicly
+  known, and the backend logs a warning while they are in use. Set them before the first start, since
+  the admin password and the database users are created then.
+
+## Changing Configuration
 
 1. Edit your `.env` file
-2. Recreate containers:
+2. Recreate the containers:
    ```bash
    docker compose up -d --force-recreate
    ```
 
-**Supported variables for runtime updates:**
-- `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER`, `DATABASE_PASSWORD`
-- `TZ`, `URL`, `TITLE`, `LIBRARY`, `FILE_GROUP_OWNER`
-- `SOLR_HOST`, `SOLR_PORT`
-
-**Note:** Changing database credentials requires the MariaDB user to already exist. MariaDB only creates users on first initialization.
+Only "Every start" variables are applied this way, see [How Configuration Works](#how-configuration-works).
 
 ## Services & Ports
 
@@ -92,7 +122,7 @@ Environment variables are synced to configuration files on every container start
 | solr | 8983 | Search engine admin |
 | backend | - | PHP-FPM (internal) |
 | cron | - | Background tasks (internal) |
-| db | 3306 | MariaDB (internal) |
+| db | - | MariaDB (internal) |
 
 ## Common Commands
 
@@ -109,7 +139,7 @@ docker compose down
 # Apply configuration changes
 docker compose up -d --force-recreate
 
-# Full reset (delete all data)
+# Full reset (deletes all data, including the database)
 docker compose down -v
-rm -rf data/
+rm -rf aspen/   # or your ASPEN_HOME
 ```
