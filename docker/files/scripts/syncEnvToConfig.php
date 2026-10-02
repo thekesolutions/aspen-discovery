@@ -78,8 +78,8 @@ foreach ($fileChanges as $file => $sections) {
 	}
 }
 
-rebuildDsn($configDir);
-DockerLogger::info("Rebuilt database_dsn");
+rebuildConnectionStrings($configDir);
+DockerLogger::info("Rebuilt database_dsn and database_aspen_jdbc");
 
 DockerLogger::info("Environment sync complete");
 
@@ -176,11 +176,11 @@ function formatIniValue(string $value, bool $isBoolean = false): string {
 }
 
 /**
- * Rebuild the database_dsn value from environment variables or their defaults.
+ * Rebuild database_dsn (PHP) and database_aspen_jdbc (Java) from environment variables or their defaults.
  *
  * @param string $configDir Path to the config directory
  */
-function rebuildDsn(string $configDir): void {
+function rebuildConnectionStrings(string $configDir): void {
 	$pwdFile = "{$configDir}/config.pwd.ini";
 
 	if (!file_exists($pwdFile)) {
@@ -190,9 +190,19 @@ function rebuildDsn(string $configDir): void {
 	$host = DockerEnv::get('DATABASE_HOST');
 	$port = DockerEnv::get('DATABASE_PORT');
 	$name = DockerEnv::get('DATABASE_NAME');
+	$user = DockerEnv::get('DATABASE_USER');
+	$password = DockerEnv::get('DATABASE_PASSWORD');
+	$timezone = DockerEnv::get('TZ');
 
 	$dsn = "mysql:host={$host};port={$port};dbname={$name}";
 
-	// Update dsn in file
-	updateIniFile($pwdFile, ['Database' => ['database_dsn' => $dsn]]);
+	// Percent-encode the parameters: Connector/J decodes them, and it keeps characters like ; and "
+	// out of the INI value, which Java's ConfigUtil.cleanIniValue() would otherwise truncate or strip
+	$jdbc = "jdbc:mysql://{$host}:{$port}/" . rawurlencode($name)
+		. '?user=' . rawurlencode($user)
+		. '&password=' . rawurlencode($password)
+		. '&useUnicode=yes&characterEncoding=UTF-8'
+		. '&serverTimezone=' . rawurlencode($timezone);
+
+	updateIniFile($pwdFile, ['Database' => ['database_dsn' => $dsn, 'database_aspen_jdbc' => $jdbc]]);
 }
