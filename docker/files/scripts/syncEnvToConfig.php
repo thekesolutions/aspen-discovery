@@ -1,20 +1,18 @@
 <?php
 /**
  * Sync environment variables to existing config files.
- * Only updates values for env vars that are explicitly set.
+ * Environment variables are the only source for the mapped keys: each key is set to its variable's
+ * value, or to the default when the variable is unset or empty.
  * Preserves all other configuration.
  *
  * Runs on every container start to apply env var changes.
  */
 
 require_once __DIR__ . '/../logger/DockerLogger.php';
+require_once __DIR__ . '/../env/DockerEnv.php';
 DockerLogger::init('BACKEND');
 
-$siteName = getenv('SITE_NAME');
-if (!$siteName) {
-	DockerLogger::error("SITE_NAME environment variable is required");
-	exit(1);
-}
+$siteName = DockerEnv::get('SITE_NAME');
 
 $configDir = "/usr/local/aspen-discovery/sites/{$siteName}/conf";
 
@@ -47,24 +45,24 @@ $envMapping = [
 	'DEBUG'             => ['config.ini', 'System', 'debug'],
 ];
 
+// Keys whose values are INI booleans and must stay unquoted
+$booleanKeys = ['debug'];
+
 // Group changes by file
 $fileChanges = [];
-$changedEnvVars = [];
+$defaultedEnvVars = [];
 
 foreach ($envMapping as $envVar => [$file, $section, $key]) {
-	$value = getenv($envVar);
-	if ($value !== false && $value !== '') {
-		$fileChanges[$file][$section][$key] = $value;
-		$changedEnvVars[] = $envVar;
+	$fileChanges[$file][$section][$key] = DockerEnv::get($envVar);
+	if (DockerEnv::usesDefault($envVar)) {
+		$defaultedEnvVars[] = $envVar;
 	}
 }
 
-if (empty($fileChanges)) {
-	DockerLogger::info("No environment variables to sync");
-	exit(0);
+DockerLogger::info("Syncing environment variables: " . implode(', ', array_keys($envMapping)));
+if (!empty($defaultedEnvVars)) {
+	DockerLogger::info("Using defaults for: " . implode(', ', $defaultedEnvVars));
 }
-
-DockerLogger::info("Syncing environment variables: " . implode(', ', $changedEnvVars));
 
 // Apply changes to each file
 foreach ($fileChanges as $file => $sections) {
@@ -74,17 +72,14 @@ foreach ($fileChanges as $file => $sections) {
 		continue;
 	}
 
-	$updated = updateIniFile($filePath, $sections);
+	$updated = updateIniFile($filePath, $sections, $booleanKeys);
 	if ($updated) {
 		DockerLogger::info("Updated {$file}");
 	}
 }
 
-// Rebuild database_dsn if any DB component changed
-if (isset($fileChanges['config.pwd.ini']['Database'])) {
-	rebuildDsn($configDir);
-	DockerLogger::info("Rebuilt database_dsn");
-}
+rebuildDsn($configDir);
+DockerLogger::info("Rebuilt database_dsn");
 
 DockerLogger::info("Environment sync complete");
 
@@ -97,9 +92,10 @@ DockerLogger::info("Environment sync complete");
  *
  * @param string $filePath Path to the INI file
  * @param array $changes Array of [section => [key => value]] to update
+ * @param array $booleanKeys Keys written as INI booleans instead of strings
  * @return bool True if file was modified
  */
-function updateIniFile(string $filePath, array $changes): bool {
+function updateIniFile(string $filePath, array $changes, array $booleanKeys = []): bool {
 	$lines = file($filePath, FILE_IGNORE_NEW_LINES);
 	$currentSection = null;
 	$modified = false;
@@ -123,7 +119,7 @@ function updateIniFile(string $filePath, array $changes): bool {
 			foreach ($changes[$currentSection] as $key => $newValue) {
 				// Match key at start of line (handles various spacing)
 				if (preg_match('/^' . preg_quote($key, '/') . '\s*=/', $trimmed)) {
-					$formatted = formatIniValue($newValue);
+					$formatted = formatIniValue($newValue, in_array($key, $booleanKeys));
 
 					// Preserve original indentation
 					$indent = '';
@@ -148,7 +144,7 @@ function updateIniFile(string $filePath, array $changes): bool {
 			if (trim($line) === "[{$section}]") {
 				$newLines = [];
 				foreach ($remaining as $key => $newValue) {
-					$newLines[] = "{$key} = " . formatIniValue($newValue);
+					$newLines[] = "{$key} = " . formatIniValue($newValue, in_array($key, $booleanKeys));
 				}
 				array_splice($lines, $i + 1, 0, $newLines);
 				$modified = true;
@@ -165,16 +161,22 @@ function updateIniFile(string $filePath, array $changes): bool {
 }
 
 /**
- * Quote a value if it contains characters that are special in INI files.
+ * Quote a value if it contains characters that are special in INI files,
+ * escaping the ones PHP's INI parser still interprets inside double quotes.
+ * Words like yes/no/none are also quoted, since PHP would otherwise turn them
+ * into "1" or "", unless the key is a boolean.
  */
-function formatIniValue(string $value): string {
-	$needsQuotes = strpos($value, ' ') !== false || strpos($value, '{') !== false || strpos($value, '}') !== false || strpos($value, ';') !== false;
-	return $needsQuotes ? "\"{$value}\"" : $value;
+function formatIniValue(string $value, bool $isBoolean = false): string {
+	$reservedWords = ['true', 'false', 'on', 'off', 'yes', 'no', 'none', 'null'];
+	$isReserved = in_array(strtolower($value), $reservedWords);
+	if (preg_match('~^[\w.:/@+,-]*$~', $value) && ($isBoolean || !$isReserved)) {
+		return $value;
+	}
+	return '"' . str_replace(['\\', '"', '$'], ['\\\\', '\\"', '\\$'], $value) . '"';
 }
 
 /**
- * Rebuild the database_dsn value from environment variables.
- * Falls back to INI file values or defaults if env vars not set.
+ * Rebuild the database_dsn value from environment variables or their defaults.
  *
  * @param string $configDir Path to the config directory
  */
@@ -185,12 +187,9 @@ function rebuildDsn(string $configDir): void {
 		return;
 	}
 
-	$config = parse_ini_file($pwdFile, true);
-
-	// Prefer env vars, then INI file, then defaults
-	$host = getenv('DATABASE_HOST') ?: ($config['Database']['database_aspen_host'] ?? 'localhost');
-	$port = getenv('DATABASE_PORT') ?: ($config['Database']['database_aspen_dbport'] ?? '3306');
-	$name = getenv('DATABASE_NAME') ?: ($config['Database']['database_aspen_dbname'] ?? 'aspen');
+	$host = DockerEnv::get('DATABASE_HOST');
+	$port = DockerEnv::get('DATABASE_PORT');
+	$name = DockerEnv::get('DATABASE_NAME');
 
 	$dsn = "mysql:host={$host};port={$port};dbname={$name}";
 
