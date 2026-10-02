@@ -45,9 +45,28 @@ while [ ! -f "$confSiteFile" ]; do
 
 done
 
-# Set crontab to be executed
+# Rebuild the site crontab from the image on every start, so crontab fixes reach
+# existing installs. Site-specific jobs belong in crontab_local, which is appended.
+crontabTemplate="/usr/local/aspen-discovery/docker/files/cron/crontab"
+siteCrontab="$CONFIG_DIRECTORY/conf/crontab"
+localCrontab="$CONFIG_DIRECTORY/conf/crontab_local"
+
+newCrontab=$(mktemp)
+sed "s|{sitename}|${SITE_NAME}|g" "$crontabTemplate" > "$newCrontab"
+if [ -f "$localCrontab" ]; then
+	log_info "Appending $localCrontab"
+	{ echo; cat "$localCrontab"; echo; } >> "$newCrontab"
+fi
+
+if [ -f "$siteCrontab" ] && ! cmp -s "$newCrontab" "$siteCrontab"; then
+	cp "$siteCrontab" "$siteCrontab.bak"
+	log_warn "$siteCrontab was replaced, previous version saved as crontab.bak; put site-specific jobs in crontab_local"
+fi
+install -m 644 "$newCrontab" "$siteCrontab"
+rm -f "$newCrontab"
+
 log_info "Setting crontab to be executed"
-crontab -u root "$CONFIG_DIRECTORY/conf/crontab" >/proc/1/fd/1 2>/proc/1/fd/2
+crontab -u root "$siteCrontab" >/proc/1/fd/1 2>/proc/1/fd/2
 
 log_info "Starting Cron in foreground mode..."
 # Start cron daemon

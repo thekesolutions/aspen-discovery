@@ -114,11 +114,9 @@ try {
 
 	// Copy from docker directory
 	copy($requiredDirs['dockerDir'] . "/files/php_fpm/php-fpm.conf", $siteDir . "/conf/php-fpm.conf");
-	copy($requiredDirs['dockerDir'] . "/files/cron/crontab", "$siteDir/conf/crontab");
 
 	// Replace variables in docker files
 	replaceVariables($siteDir . "/conf/php-fpm.conf", $variables);
-	replaceVariables($siteDir . "/conf/crontab", $variables);
 
 	// Create temp directory
 	if (!file_exists('/tmp')) {

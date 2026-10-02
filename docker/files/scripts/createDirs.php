@@ -124,7 +124,6 @@ try {
 	DockerLogger::setPermissions("$configDir/conf/php-fpm.conf", $newOwner, '755');
 	DockerLogger::setPermissions("$configDir/httpd-$siteName.conf", 'root', '644');
 	DockerLogger::setPermissions("$configDir/conf/crontab_settings.txt", 'root', '644');
-	DockerLogger::setPermissions("$configDir/conf/crontab", 'root', '644');
 
 	if (file_exists("$configDir/conf/log4j")) {
 		DockerLogger::setPermissions("$configDir/conf/log4j*", $newOwner, '755');
