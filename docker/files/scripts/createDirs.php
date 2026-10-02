@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../logger/DockerLogger.php';
+require_once __DIR__ . '/../env/DockerEnv.php';
 DockerLogger::init('BACKEND');
 
 $newOwner = "www-data"; // default user
@@ -11,7 +12,7 @@ if (count($argv) == 2) {
 
 DockerLogger::info("Setting owner: {$newOwner}");
 
-$siteName = getenv('SITE_NAME');
+$siteName = DockerEnv::get('SITE_NAME');
 DockerLogger::info("Site name: {$siteName}");
 $configDir = getenv('CONFIG_DIRECTORY');
 DockerLogger::info("Config directory: {$configDir}");

@@ -1,20 +1,17 @@
 <?php
 
 require_once __DIR__ . '/../logger/DockerLogger.php';
+require_once __DIR__ . '/../env/DockerEnv.php';
 DockerLogger::init('BACKEND');
 
 // Initialize database
-$aspenAdminPassword = getenv('ASPEN_ADMIN_PASSWORD');
-$supportingCompany = getenv('SUPPORTING_COMPANY') ?? 'ByWater Solutions';
-$databaseHost = getenv('DATABASE_HOST') ?? 'localhost';
-$databasePort = getenv('DATABASE_PORT') ?? 3306;
-$databaseName = getenv('DATABASE_NAME');
-$databaseUser = getenv('DATABASE_USER');
-$databasePassword = getenv('DATABASE_PASSWORD');
-
-if (!$databaseName || !$databaseUser || !$databasePassword) {
-	DockerLogger::error("Missing required database environment variables");
-}
+$aspenAdminPassword = DockerEnv::get('ASPEN_ADMIN_PASSWORD');
+$supportingCompany = DockerEnv::get('SUPPORTING_COMPANY');
+$databaseHost = DockerEnv::get('DATABASE_HOST');
+$databasePort = DockerEnv::get('DATABASE_PORT');
+$databaseName = DockerEnv::get('DATABASE_NAME');
+$databaseUser = DockerEnv::get('DATABASE_USER');
+$databasePassword = DockerEnv::get('DATABASE_PASSWORD');
 
 $databaseDsn = "mysql:host=$databaseHost;port=$databasePort;dbname=$databaseName";
 
@@ -70,6 +67,9 @@ DockerLogger::info("Default database schema loaded successfully");
 $aspenDatabase = new PDO($databaseDsn, $databaseUser, $databasePassword);
 $updateUserStmt = $aspenDatabase->prepare("UPDATE user set cat_password=" . $aspenDatabase->quote($aspenAdminPassword) . ", password=" . $aspenDatabase->quote($aspenAdminPassword) . " where username = 'aspen_admin'");
 $updateUserStmt->execute();
+if (DockerEnv::usesDefault('ASPEN_ADMIN_PASSWORD')) {
+	DockerLogger::warn("ASPEN_ADMIN_PASSWORD is not set, aspen_admin was given the default password; change it before going live");
+}
 
 // Assign supportingCompany in the database
 $postSupportingCompanyStmt = $aspenDatabase->prepare("UPDATE system_variables set supportingCompany=" . $aspenDatabase->quote($supportingCompany));

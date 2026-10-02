@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../logger/DockerLogger.php';
+require_once __DIR__ . '/../env/DockerEnv.php';
 DockerLogger::init('APACHE');
 
 if (count($argv) < 2) {
@@ -35,10 +36,7 @@ try {
 
 	// Copy data-alias.conf with sitename replacement
 	if (file_exists("$dockerDir/files/apache2/data-alias.conf")) {
-		$sitename = getenv('SITE_NAME');
-		if (!$sitename) {
-			DockerLogger::error("SITE_NAME environment variable is required");
-		}
+		$sitename = DockerEnv::get('SITE_NAME');
 
 		$dataAliasContent = file_get_contents("$dockerDir/files/apache2/data-alias.conf");
 		$dataAliasContent = str_replace('{sitename}', $sitename, $dataAliasContent);
