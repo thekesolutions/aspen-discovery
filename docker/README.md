@@ -114,6 +114,13 @@ The defaults are meant for trying Aspen locally. Before going live, set at least
 
 Only "Every start" variables are applied this way, see [How Configuration Works](#how-configuration-works).
 
+## Scheduled Jobs
+
+The cron container rebuilds `conf/crontab` (inside `ASPEN_HOME`) from the image on every start, so
+don't edit it directly. To add site-specific jobs, put them in `conf/crontab_local`; it is appended to
+the generated crontab. If a start replaces a crontab that differs from the image's version, the
+previous file is kept as `conf/crontab.bak`.
+
 ## Services & Ports
 
 | Service | Port | Description |
