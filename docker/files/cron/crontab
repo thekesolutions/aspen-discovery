@@ -68,4 +68,14 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 0 1 * * *    sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/talpaWorksCron.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
 0 2 1 * *    sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/talpaRecalculationCron.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
 
+#   Patron-facing jobs (emails, ILS messages, reading history, events)
+#   Each only acts once its feature is configured in Aspen.
+0 6 * * *       sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/sendCampaignEmails.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
+0 6 * * *       sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/sendCampaignEndingEmails.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
+59 23 * * *     sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/updateCommunityEngagementMilestones.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
+*/40 8-19 * * * sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/fetchILSMessages.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
+*/59 8-19 * * * sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/sendILSMessages.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
+*/5 * * * *     sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/loadInitialReadingHistory.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
+*/5 * * * *     sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/updateEventRegistrationInvitations.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
+
 ## Cron needs a new line at the EOF to work properly
