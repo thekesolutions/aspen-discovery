@@ -11,6 +11,10 @@
 # └───────────────────────── min (0 - 59)
 ## taken from https://en.wikipedia.org/wiki/Cron
 
+# This file is installed with `crontab -u root`, so jobs get cron's default PATH
+# (/usr/bin:/bin), not the one in /etc/crontab. runuser lives in /usr/sbin.
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
 
 #   Indexing Tasks 
 7 3 * * *   sudo -u www-data    echo php /usr/local/aspen-discovery/code/web/cron/createSitemaps.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
