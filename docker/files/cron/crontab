@@ -55,4 +55,17 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 #   Generate Materials Request Hold Candidates 
 0 9 * * *    sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/generateMaterialRequestHoldCandidates.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
 
+#   Rebuild Solr search suggesters (autocomplete)
+5 2 * * *    sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/updateSuggesters.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
+
+#   Maintenance cleanup
+15 * * * *   sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/cleanupSharedSessions.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
+59 23 * * *  sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/purgeSoftDeleted.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
+0 */12 * * * sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/purgeUserAppRequestLogs.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
+0 3 * * *    sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/dismissYearInReviewMessages.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
+
+#   Talpa
+0 1 * * *    sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/talpaWorksCron.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
+0 2 1 * *    sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/talpaRecalculationCron.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
+
 ## Cron needs a new line at the EOF to work properly
