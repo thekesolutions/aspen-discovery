@@ -237,18 +237,6 @@ function updateConfigForScoping(array $configArray) : array {
 	global $timer;
 	global $fullServerName;
 
-	//Get the subdomain for the request
-	if (isset($_REQUEST['test_servername'])) {
-		$fullServerName = $_GET['test_servername'];
-		if (empty($fullServerName)) {
-			setcookie('test_servername', $_COOKIE['test_servername'], time() - 1000, '/');
-		} elseif (!isset($_COOKIE['test_servername']) || ($_COOKIE['test_servername'] != $fullServerName)) {
-			setcookie('test_servername', $fullServerName, 0, '/');
-		}
-	} elseif (isset($_COOKIE['test_servername'])) {
-		$fullServerName = $_COOKIE['test_servername'];
-	}
-
 	//split the servername based on
 	global $subdomain;
 	$subdomain = null;
