@@ -24,6 +24,8 @@ class SideLoads_UploadMarc extends Admin_Admin {
 					$interface->assign('error', "The MARC File was too large, compress the file or break it into multiple files");
 				} elseif (isset($uploadedFile["error"]) && $uploadedFile["error"] > 0) {
 					$interface->assign('error', "Error in file upload for MARC File");
+				} elseif ($this->isPhpFilename(str_replace('.gz', '', $uploadedFile['name'])) || $this->zipContainsPhp($uploadedFile['tmp_name'])) {
+					$interface->assign('error', "Unsupported file type.");
 				} else {
 					//File was uploaded, need to verify it was the correct type
 					$fileType = $uploadedFile["type"];
@@ -147,6 +149,25 @@ class SideLoads_UploadMarc extends Admin_Admin {
 
 		$interface->assign('id', $_REQUEST['id']);
 		$this->display('uploadMarc.tpl', 'Upload MARC File');
+	}
+
+	private function isPhpFilename(string $filename): bool {
+		return strtolower(pathinfo($filename, PATHINFO_EXTENSION)) == 'php';
+	}
+
+	private function zipContainsPhp(string $path): bool {
+		$zip = new ZipArchive();
+		if ($zip->open($path) !== true) {
+			return false;
+		}
+		for ($i = 0; $i < $zip->numFiles; $i++) {
+			if ($this->isPhpFilename($zip->getNameIndex($i))) {
+				$zip->close();
+				return true;
+			}
+		}
+		$zip->close();
+		return false;
 	}
 
 	function getBreadcrumbs(): array {
