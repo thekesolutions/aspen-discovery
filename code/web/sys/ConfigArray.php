@@ -327,8 +327,9 @@ function updateConfigForScoping(array $configArray) : array {
 				} else {
 					//The subdomain can also indicate a location.
 					$Location = new Location();
-					$Location->whereAdd("code = '$subdomain'");
-					$Location->whereAdd("subdomain = '$subdomain'", 'OR');
+					$subdomainSqlLiteral = $Location->escape($subdomain);
+					$Location->whereAdd("code = $subdomainSqlLiteral");
+					$Location->whereAdd("subdomain = $subdomainSqlLiteral", 'OR');
 					if ($Location->count() == 1) {
 						$Location->find(true);
 						//We found a location for the subdomain, get the library.
