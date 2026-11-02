@@ -1409,17 +1409,17 @@ abstract class ObjectEditor extends Admin_Admin {
 					$object->whereAdd("$fullFieldName IS NULL OR $fullFieldName = ''");
 				} else {
 					if ($addAsHaving) {
-						$object->havingAdd("$fieldName = {$filter['filterValue']}");
+						$this->addFilterCondition($object, $fieldName, $fullFieldName, '=', $filter['filterValue'], true);
 					} else {
 						$object->$fieldName = $filter['filterValue'];
 					}
 				}
 				break;
 			case 'contains':
-				$object->whereAdd("$fullFieldName like " . $object->escape('%' . $filter['filterValue'] . '%'));
+				$this->addFilterCondition($object, $fieldName, $fullFieldName, 'like', '%' . $filter['filterValue'] . '%', false);
 				break;
 			case 'startsWith':
-				$object->whereAdd("$fullFieldName like " . $object->escape($filter['filterValue'] . '%'));
+				$this->addFilterCondition($object, $fieldName, $fullFieldName, 'like', $filter['filterValue'] . '%', false);
 				break;
 			case 'beforeTime':
 			case 'afterTime':
@@ -1442,73 +1442,35 @@ abstract class ObjectEditor extends Admin_Admin {
 				}
 				break;
 			case 'lessThan':
-				$fieldValue = $filter['filterValue2'];
-				if ($fieldValue !== false) {
-					if ($addAsHaving) {
-						$object->havingAdd("$fieldName < $fieldValue");
-					} else {
-						$object->whereAdd("$fullFieldName < $fieldValue");
-					}
-				}
+				$this->addFilterCondition($object, $fieldName, $fullFieldName, '<', $filter['filterValue2'], $addAsHaving);
 				break;
 			case 'lessThanOrEqual':
-				$fieldValue = $filter['filterValue2'];
-				if ($fieldValue !== false) {
-					if ($addAsHaving) {
-						$object->havingAdd("$fieldName <= $fieldValue");
-					} else {
-						$object->whereAdd("$fullFieldName <= $fieldValue");
-					}
-				}
+				$this->addFilterCondition($object, $fieldName, $fullFieldName, '<=', $filter['filterValue2'], $addAsHaving);
 				break;
 			case 'equals':
-				$fieldValue = $filter['filterValue'];
-				if ($fieldValue !== false) {
-					if ($addAsHaving) {
-						$object->havingAdd("$fieldName = $fieldValue");
-					} else {
-						$object->whereAdd("$fullFieldName = $fieldValue");
-					}
-				}
+				$this->addFilterCondition($object, $fieldName, $fullFieldName, '=', $filter['filterValue'], $addAsHaving);
 				break;
 			case 'greaterThan':
-				$fieldValue = $filter['filterValue'];
-				if ($fieldValue !== false) {
-					if ($addAsHaving) {
-						$object->havingAdd("$fieldName > $fieldValue");
-					} else {
-						$object->whereAdd("$fullFieldName > $fieldValue");
-					}
-				}
+				$this->addFilterCondition($object, $fieldName, $fullFieldName, '>', $filter['filterValue'], $addAsHaving);
 				break;
 			case 'greaterThanOrEqual':
-				$fieldValue = $filter['filterValue'];
-				if ($fieldValue !== false) {
-					if ($addAsHaving) {
-						$object->havingAdd("$fieldName  >= $fieldValue");
-					} else {
-						$object->whereAdd("$fullFieldName >= $fieldValue");
-					}
-				}
+				$this->addFilterCondition($object, $fieldName, $fullFieldName, '>=', $filter['filterValue'], $addAsHaving);
 				break;
 			case 'between':
-				$fieldValue = $filter['filterValue'];
-				if ($fieldValue !== false) {
-					if ($addAsHaving) {
-						$object->havingAdd("$fieldName  >= $fieldValue");
-					} else {
-						$object->whereAdd("$fullFieldName >= $fieldValue");
-					}
-				}
-				$fieldValue2 = $filter['filterValue2'];
-				if ($fieldValue2 !== false) {
-					if ($addAsHaving) {
-						$object->havingAdd("$fieldName <= $fieldValue2");
-					} else {
-						$object->whereAdd("$fullFieldName <= $fieldValue2");
-					}
-				}
+				$this->addFilterCondition($object, $fieldName, $fullFieldName, '>=', $filter['filterValue'], $addAsHaving);
+				$this->addFilterCondition($object, $fieldName, $fullFieldName, '<=', $filter['filterValue2'], $addAsHaving);
 				break;
+		}
+	}
+
+	protected function addFilterCondition(DataObject $object, string $fieldName, string $fullFieldName, string $operator, mixed $fieldValue, bool $addAsHaving) : void {
+		if ($fieldValue === "" || !is_scalar($fieldValue)) {
+			return;
+		}
+		if ($addAsHaving) {
+			$object->havingAdd("$fieldName $operator " . $object->escape($fieldValue));
+		} else {
+			$object->whereAdd("$fullFieldName $operator " . $object->escape($fieldValue));
 		}
 	}
 
