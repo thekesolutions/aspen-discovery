@@ -54,51 +54,6 @@ class SnapPay_Complete extends Action {
 			header('Location: /MyAccount/Fines?s=' . urlencode(EncryptionUtils::encryptField($_GET['u'])));
 			return;
 		}
-
-		// Attempt to restore user session if it has been lost
-		// Should follow "Eliminate requests NOT originating from SnapPay" check to avoid promoting session hijacking
-		if (!UserAccount::$isLoggedIn) { // if the user is NOT logged in, i.e., the session has been lost...
-			global $session;
-			require_once ROOT_DIR . '/sys/Session/MySQLSession.php';
-
-			// Get the incoming session ID (originally provided by Aspen Discovery during createSnapPayOrder then returned by SnapPay as udf8)
-			$incomingSessionId = '';
-			if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST)) { // TO DO: what if there is no POST data?
-				if (isset($_POST['udf8']) && preg_match('/^[0-9a-z]{26}$/', $_POST['udf8'])) {
-					$incomingSessionId = $_POST['udf8'];
-				}
-			}
-			if (!empty($incomingSessionId)) {
-				// End the current, not-logged-in session
-				session_write_close();
-				// Clear any existing session cookie
-				if (isset($_COOKIE['aspen_session'])) {
-					// Destroy the existing aspen_session cookie with a different value
-					setcookie('aspen_session', $_COOKIE['aspen_session'], [
-						'expires' => time() - 3600, // Set expiration to a past time
-						'path' => '/',            // Cookie is available across the entire domain
-						'secure' => true,        // Cookie is sent only over HTTPS
-						'httponly' => '',        // Cookie is accessible through HTTP(S) and JavaScript
-						'samesite' => ''        // Does NOT prevent the cookie from being sent with cross-site requests
-					]);
-				}
-				// Start a new session with the incoming ID
-				session_id($incomingSessionId);
-				session_name('aspen_session');
-				session_start();
-
-				// Initialize the session handler
-				$session = new MySQLSession();
-
-				// Check if the session is valid
-				if (isset($_POST['customerid'])) {
-					if (!isset($_SESSION['activeUserId']) || $_SESSION['activeUserId'] != $_POST['customerid']) {
-						// If the session doesn't match the customer ID, reset it
-						session_unset();
-					}
-				}
-			}
-		}
 		if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST)) {
 			if (empty($_GET['u'])) { // Payment Reference ID from the query string
 				$error = true;
