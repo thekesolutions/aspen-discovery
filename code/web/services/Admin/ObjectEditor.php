@@ -1361,6 +1361,9 @@ abstract class ObjectEditor extends Admin_Admin {
 		$appliedFilters = [];
 		if (isset($_REQUEST['filterType'])) {
 			foreach ($_REQUEST['filterType'] as $fieldName => $value) {
+				if (!isset($filterFields[$fieldName])) {
+					continue;
+				}
 				$appliedFilters[$fieldName] = [
 					'fieldName' => $fieldName,
 					'filterType' => $value,
