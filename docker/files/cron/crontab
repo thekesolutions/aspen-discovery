@@ -17,7 +17,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 
 #   Indexing Tasks 
-7 3 * * *   sudo -u www-data    echo php /usr/local/aspen-discovery/code/web/cron/createSitemaps.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
+7 3 * * *   sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/createSitemaps.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
 */5 * * * * sudo -u www-data    php /usr/local/aspen-discovery/docker/files/cron/checkBackgroundProcessesDocker.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
 
 #   Regular extracts that don't need to run continuously 
