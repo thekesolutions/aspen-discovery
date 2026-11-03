@@ -255,6 +255,24 @@ class OAuth2Client extends DataObject {
 		$this->__set('client_secret', bin2hex(random_bytes(32)));
 	}
 
+	/**
+	 * Replaces the secret and revokes every token issued to the client, so the old secret and
+	 * anything obtained with it stop working right away.
+	 */
+	public function regenerateClientSecret(): bool {
+		if (empty($this->id)) {
+			return false;
+		}
+		$this->generateClientSecret();
+		if (!$this->update()) {
+			return false;
+		}
+		$clientId = $this->escape($this->client_id);
+		$this->query("UPDATE oauth2_refresh_tokens INNER JOIN oauth2_access_tokens ON oauth2_refresh_tokens.access_token_id = oauth2_access_tokens.token_id SET oauth2_refresh_tokens.revoked = 1 WHERE oauth2_access_tokens.client_id = $clientId");
+		$this->query("UPDATE oauth2_access_tokens SET revoked = 1 WHERE client_id = $clientId");
+		return true;
+	}
+
 	public function getScopesArray(): array {
 		if (empty($this->scopes)) {
 			return [];

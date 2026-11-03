@@ -93,6 +93,40 @@ class Admin_OAuth2Clients extends ObjectEditor {
 		return $result;
 	}
 
+	function getAdditionalObjectActions(?DataObject $existingObject): array {
+		$objectActions = [];
+		if ($existingObject instanceof OAuth2Client && !empty($existingObject->id)) {
+			$objectActions[] = [
+				'text' => 'Regenerate Secret',
+				'onclick' => "AspenDiscovery.confirm('Regenerate Secret', 'The current secret and every token issued to this client stop working right away. Are you sure you want to regenerate the secret?', 'Regenerate', 'Cancel', true, 'window.location.href=&quot;/Admin/OAuth2Clients?id={$existingObject->id}&objectAction=regenerateClientSecret&quot;', 'btn-danger'); return false;",
+			];
+		}
+		return $objectActions;
+	}
+
+	/** @noinspection PhpUnused */
+	function regenerateClientSecret(): void {
+		$user = UserAccount::getActiveUserObj();
+		$client = new OAuth2Client();
+		$client->id = $_REQUEST['id'] ?? 0;
+		if ($client->find(true) && $client->regenerateClientSecret()) {
+			$user->updateMessage = translate([
+				'text' => 'The client secret was regenerated and the tokens issued to the client were revoked.',
+				'isAdminFacing' => true,
+			]);
+			$user->updateMessageIsError = false;
+		} else {
+			$user->updateMessage = translate([
+				'text' => 'The client secret could not be regenerated.',
+				'isAdminFacing' => true,
+			]);
+			$user->updateMessageIsError = true;
+		}
+		$user->update();
+		header('Location: /Admin/OAuth2Clients?objectAction=edit&id=' . urlencode($client->id));
+		die();
+	}
+
 	function getInitializationJs(): string {
 		return 'AspenDiscovery.Admin.updateOAuth2GrantType(); AspenDiscovery.Admin.maskOAuth2ClientSecret(); return false;';
 	}
