@@ -129,7 +129,7 @@ try {
 		DockerLogger::setPermissions("$configDir/conf/log4j*", $newOwner, '755');
 	}
 	if (file_exists("$configDir/conf/passkey")) {
-		DockerLogger::setPermissions("$configDir/conf/passkey", $newOwner, '755');
+		DockerLogger::setPermissions("$configDir/conf/passkey", $newOwner, '600');
 	}
 
 	//Copy the httpd conf file

@@ -70,6 +70,13 @@ if ! php initDatabase.php ; then
 	exit 1
 fi
 
+# Create the key used to encrypt sensitive database fields, an existing key is never replaced
+log_info "Checking encryption key"
+if ! php /usr/local/aspen-discovery/code/web/cron/createKeyFile.php "$SITE_NAME" || [ ! -f "$CONFIG_DIRECTORY/conf/passkey" ]; then
+	log_error "Encryption key creation failed"
+	exit 1
+fi
+
 # Create missing dirs and fix ownership and permissions if needed
 log_info "Setting up data and log directories"
 if ! php createDirs.php ; then
