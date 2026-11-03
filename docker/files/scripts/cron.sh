@@ -52,6 +52,10 @@ for requiredFile in "${requiredFiles[@]}"; do
 	done
 done
 
+# Background processes read and write the same data folders as the web server
+source /usr/local/aspen-discovery/docker/files/scripts/linkDataDirs.sh
+link_data_dirs
+
 # Rebuild the site crontab from the image on every start, so crontab fixes reach
 # existing installs. Site-specific jobs belong in crontab_local, which is appended.
 crontabTemplate="/usr/local/aspen-discovery/docker/files/cron/crontab"
