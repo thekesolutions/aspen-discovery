@@ -230,6 +230,14 @@ abstract class AbstractAPI extends Action{
 	}
 
 	/**
+	 * The Cache-Control value sent with authenticated responses. APIs whose results must never be
+	 * reused, such as writes or listings that change between calls, override it.
+	 */
+	protected function getCacheControl(): string {
+		return 'max-age=300';
+	}
+
+	/**
 	 * Generic OAuth2 request handler with rate limiting and common response formatting
 	 *
 	 * @param string $method The API method being called
@@ -251,7 +259,7 @@ abstract class AbstractAPI extends Action{
 			$output = json_encode($result);
 
 			header('Content-type: application/json');
-			header("Cache-Control: max-age=300");
+			header('Cache-Control: ' . $this->getCacheControl());
 
 			require_once ROOT_DIR . '/sys/SystemLogging/APIUsage.php';
 			$apiName = get_class($this);
@@ -285,7 +293,7 @@ abstract class AbstractAPI extends Action{
 				$result = ['result' => $this->$method()];
 				$output = json_encode($result);
 				header('Content-type: application/json');
-				header("Cache-Control: max-age=300");
+				header('Cache-Control: ' . $this->getCacheControl());
 				require_once ROOT_DIR . '/sys/SystemLogging/APIUsage.php';
 				$apiName = get_class($this);
 				APIUsage::incrementStat($apiName, $method);
