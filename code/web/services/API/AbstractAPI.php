@@ -257,12 +257,20 @@ abstract class AbstractAPI extends Action{
 			$apiName = get_class($this);
 			APIUsage::incrementStat($apiName, $method);
 
-			ExternalRequestLogEntry::logRequest($apiName . '.' . $method, $_SERVER['REQUEST_METHOD'], $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'], getallheaders(), '', $_SERVER['REDIRECT_STATUS'], $output, []);
+			ExternalRequestLogEntry::logRequest($apiName . '.' . $method, $_SERVER['REQUEST_METHOD'], $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'], getallheaders(), '', $_SERVER['REDIRECT_STATUS'], $output, $this->getCredentialsToSanitize());
 			echo $output;
 		} else {
 			$output = json_encode(['error' => 'invalid_method']);
 			echo $output;
 		}
+	}
+
+	/**
+	 * The credentials of the current request, so the request log stores a placeholder instead
+	 */
+	protected function getCredentialsToSanitize(): array {
+		$authorization = $this->getHeader('Authorization');
+		return empty($authorization) ? [] : ['authorization' => $authorization];
 	}
 
 	/**
@@ -290,7 +298,7 @@ abstract class AbstractAPI extends Action{
 		}
 
 		$apiName = get_class($this);
-		ExternalRequestLogEntry::logRequest($apiName . '.' . $method, $_SERVER['REQUEST_METHOD'], $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'], getallheaders(), '', $_SERVER['REDIRECT_STATUS'], $output, []);
+		ExternalRequestLogEntry::logRequest($apiName . '.' . $method, $_SERVER['REQUEST_METHOD'], $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'], getallheaders(), '', $_SERVER['REDIRECT_STATUS'], $output, $this->getCredentialsToSanitize());
 		echo $output;
 	}
 
