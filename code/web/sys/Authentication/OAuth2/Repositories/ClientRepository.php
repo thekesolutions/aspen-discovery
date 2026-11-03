@@ -56,19 +56,18 @@ class ClientRepository implements ClientRepositoryInterface {
 		}
 		$logger->log("[OAuth2] ClientRepository::validateClient() - Found {$clientType} client: " . $client->getName(), Logger::LOG_DEBUG);
 
-		if ($grantType === 'password') {
+		// Only public clients may use the password grant without their secret
+		if ($grantType === 'password' && $client instanceof OAuth2Client && $client->client_type === 'native_application') {
 			return true;
 		}
-		
+
 		$storedSecret = $client->getClientSecret();
-		if ($storedSecret === $clientSecret) {
+		if (!empty($storedSecret) && is_string($clientSecret) && hash_equals($storedSecret, $clientSecret)) {
 			$logger->log("[OAuth2] ClientRepository::validateClient() - Client secret matched", Logger::LOG_DEBUG);
 			return true;
 		}
 
 		$logger->log("[OAuth2] ClientRepository::validateClient() - Client secret mismatch", Logger::LOG_DEBUG);
-		$logger->log("[OAuth2] ClientRepository::validateClient() - Stored (first 20 chars): " . substr($storedSecret, 0, 20), Logger::LOG_DEBUG);
-		$logger->log("[OAuth2] ClientRepository::validateClient() - Provided (first 20 chars): " . substr($clientSecret ?? '', 0, 20), Logger::LOG_DEBUG);
 		return false;
 	}
 
