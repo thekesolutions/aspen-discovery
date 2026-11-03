@@ -34,8 +34,8 @@ class OAuth2RateLimiter {
 	public static function checkRateLimit(string $endpoint, string $clientId = '', string $ipAddress = ''): array {
 		global $logger;
 		
-		// Get rate limit config for endpoint
-		$config = self::$rateLimits[$endpoint] ?? [
+		// A limit set on the client replaces the endpoint's limit for that client
+		$config = self::getClientRateLimit($clientId) ?? self::$rateLimits[$endpoint] ?? [
 			'requests' => 100,
 			'window' => 3600,
 			'description' => 'Default API rate limit'
@@ -86,6 +86,19 @@ class OAuth2RateLimiter {
 			'resetTime' => $resetTime,
 			'message' => 'Request allowed'
 		];
+	}
+
+	private static function getClientRateLimit(string $clientId): ?array {
+		if (empty($clientId)) {
+			return null;
+		}
+		require_once ROOT_DIR . '/sys/Authentication/OAuth2/OAuth2Client.php';
+		$client = new OAuth2Client();
+		$client->client_id = $clientId;
+		if (!$client->find(true)) {
+			return null;
+		}
+		return $client->getRateLimit();
 	}
 
 	/**

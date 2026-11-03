@@ -12,6 +12,8 @@ class OAuth2Client extends DataObject {
 	protected $scopes;
 	protected $redirect_uri;
 	protected $is_active;
+	protected $rate_limit_requests;
+	protected $rate_limit_window;
 	protected $created_by;
 	protected $created_date;
 	protected $last_modified;
@@ -98,6 +100,26 @@ class OAuth2Client extends DataObject {
 				'description' => 'Whether this client is currently active',
 				'default' => true,
 			],
+			'rate_limit_requests' => [
+				'property' => 'rate_limit_requests',
+				'type' => 'integer',
+				'label' => 'Rate Limit Requests',
+				'description' => 'The number of API requests this client may make to each API per rate limit window',
+				'note' => 'Leave as 0 to use the default limit of each API',
+				'min' => 0,
+				'default' => 0,
+				'hideInLists' => true,
+			],
+			'rate_limit_window' => [
+				'property' => 'rate_limit_window',
+				'type' => 'integer',
+				'label' => 'Rate Limit Window (seconds)',
+				'description' => 'The length of the rate limit window in seconds',
+				'note' => 'Leave as 0 to use the default limit of each API',
+				'min' => 0,
+				'default' => 0,
+				'hideInLists' => true,
+			],
 			'created_by' => [
 				'property' => 'created_by',
 				'type' => 'label',
@@ -142,7 +164,23 @@ class OAuth2Client extends DataObject {
 	function getNumericColumnNames(): array {
 		return [
 			'id',
+			'rate_limit_requests',
+			'rate_limit_window',
 			'created_by'
+		];
+	}
+
+	/**
+	 * The rate limit set for this client, or null when it uses the default limit of each API.
+	 */
+	public function getRateLimit(): ?array {
+		if (empty($this->rate_limit_requests) || empty($this->rate_limit_window)) {
+			return null;
+		}
+		return [
+			'requests' => (int)$this->rate_limit_requests,
+			'window' => (int)$this->rate_limit_window,
+			'description' => 'Client rate limit',
 		];
 	}
 

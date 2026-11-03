@@ -54,6 +54,16 @@ function getUpdates26_11_00(): array {
 			],
 		], //oauth2_rate_limits_per_client
 
+		'oauth2_client_rate_limits' => [
+			'title' => 'OAuth2 client rate limits',
+			'description' => 'Allow a rate limit per OAuth2 client',
+			'continueOnError' => false,
+			'sql' => [
+				'ALTER TABLE oauth2_clients ADD COLUMN rate_limit_requests INT NOT NULL DEFAULT 0 AFTER is_active',
+				'ALTER TABLE oauth2_clients ADD COLUMN rate_limit_window INT NOT NULL DEFAULT 0 AFTER rate_limit_requests',
+			],
+		], //oauth2_client_rate_limits
+
 		//tomas
 
 		// stephen
