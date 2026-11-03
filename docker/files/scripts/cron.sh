@@ -26,11 +26,12 @@ log_info "Starting Cron initialization"
 
 export CONFIG_DIRECTORY="/usr/local/aspen-discovery/sites/${SITE_NAME}"
 
-# Wait for every file the backend creates that cron jobs need. conf/crontab is not one of
-# them, it is built below from the image.
+# Wait for every file the backend creates that cron jobs need, the passkey is created last.
+# conf/crontab is not one of them, it is built below from the image.
 requiredFiles=(
 	"$CONFIG_DIRECTORY/conf/config.ini"
 	"$CONFIG_DIRECTORY/conf/config.pwd.ini"
+	"$CONFIG_DIRECTORY/conf/passkey"
 )
 
 tries=0
