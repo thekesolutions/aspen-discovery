@@ -28,7 +28,13 @@ if (!file_exists($passkeyFile)) {
         $runningOnWindows = false;
     }
     if (!$runningOnWindows) {
-        exec('chown aspen:aspen_apache ' . $passkeyFile);
-        exec('chmod 440 ' . $passkeyFile);
+        //Docker images have no aspen user, there the web server user owns the key
+        if (posix_getpwnam('aspen') !== false) {
+            exec('chown aspen:aspen_apache ' . $passkeyFile);
+            exec('chmod 440 ' . $passkeyFile);
+        } else {
+            exec('chown www-data:www-data ' . $passkeyFile);
+            exec('chmod 600 ' . $passkeyFile);
+        }
     }
 }
