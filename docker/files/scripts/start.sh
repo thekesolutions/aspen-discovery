@@ -81,34 +81,8 @@ fi
 #        It should be put outside the codebase, and mounted accordingly
 
 # Move and create temporarily sym-links to data directory
-dataDir="/data/aspen-discovery/$SITE_NAME"
-localDir="/usr/local/aspen-discovery/code/web"
-
-directories=(files images fonts)
-for dir in "${directories[@]}"; do
-
-	source="$localDir/$dir"
-    dest="$dataDir/$dir"
-
-    # Ensure persistent target directory exists
-    mkdir -p "$dest"
-
-    # Move original data only if source is a real directory and target is empty
-    if [ -d "$source" ] && [ ! -L "$source" ] && [ "$(ls -A "$dest")" == "" ]; then
-        mv "$source"/* "$dest"/ 2>/dev/null || true
-    fi
-
-    # Remove source only if it's a real directory (not a symlink)
-    # This is required because ln -sfn can't replace a directory
-    if [ -d "$source" ] && [ ! -L "$source" ]; then
-        rm -rf "$source"
-    fi
-
-    # Create symlink atomically (ln -sfn replaces existing symlink in one operation)
-    ln -sfn "$dest" "$source"
-
-    log_info "Created symlink: $source → $dest"
-done
+source /usr/local/aspen-discovery/docker/files/scripts/linkDataDirs.sh
+link_data_dirs
 
 # Run pending database updates
 log_info "Running pending database updates..."
