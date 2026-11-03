@@ -26,23 +26,29 @@ log_info "Starting Cron initialization"
 
 export CONFIG_DIRECTORY="/usr/local/aspen-discovery/sites/${SITE_NAME}"
 
-# Check if site configuration exists
-confSiteFile="$CONFIG_DIRECTORY/conf/config.ini"
+# Wait for every file the backend creates that cron jobs need, the passkey is created last
+requiredFiles=(
+	"$CONFIG_DIRECTORY/conf/config.ini"
+	"$CONFIG_DIRECTORY/conf/config.pwd.ini"
+	"$CONFIG_DIRECTORY/conf/passkey"
+)
 
 tries=0
 MAX_TRIES=10
 
-while [ ! -f "$confSiteFile" ]; do
+for requiredFile in "${requiredFiles[@]}"; do
+	while [ ! -f "$requiredFile" ]; do
 
-	log_info "Waiting for site configuration: $confSiteFile... (attempt $tries/$MAX_TRIES)"
-	sleep 5
-	((tries++))
+		log_info "Waiting for site configuration: $requiredFile... (attempt $tries/$MAX_TRIES)"
+		sleep 5
+		((tries++))
 
-	if [ $tries -eq $MAX_TRIES ] ; then
-		log_error "Site configuration not initialized. Skipping cron startup and waiting..."
-		exit 1
-	fi
+		if [ $tries -eq $MAX_TRIES ] ; then
+			log_error "Site configuration not initialized. Skipping cron startup and waiting..."
+			exit 1
+		fi
 
+	done
 done
 
 # Background processes read and write the same data folders as the web server
