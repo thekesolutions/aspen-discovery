@@ -50,6 +50,15 @@ try {
 		}
 	}
 
+	// Copy pass-authorization.conf, so sites created before the vhost template passed the header get it too
+	if (file_exists("$dockerDir/files/apache2/pass-authorization.conf")) {
+		if (!copy("$dockerDir/files/apache2/pass-authorization.conf", "$apacheDir/conf-enabled/pass-authorization.conf")) {
+			DockerLogger::warn("Failed to copy pass-authorization configuration");
+		} else {
+			DockerLogger::info("Pass authorization configuration copied");
+		}
+	}
+
 	// Validate Apache configuration
 	$output = [];
 	$returnCode = 0;
