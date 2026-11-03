@@ -222,5 +222,13 @@ abstract class Action
 		return false;
 	}
 
+	protected function getRequestedPage(): int {
+		return max(1, (int)($_REQUEST['page'] ?? 1));
+	}
+
+	protected function getRequestedPageSize(int $defaultPageSize, string $parameterName = 'pageSize', int $maxPageSize = 100): int {
+		return min($maxPageSize, max(1, (int)($_REQUEST[$parameterName] ?? $defaultPageSize)));
+	}
+
 	abstract function getBreadcrumbs() : array;
 }

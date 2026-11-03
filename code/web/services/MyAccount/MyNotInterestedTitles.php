@@ -12,8 +12,8 @@ class MyNotInterestedTitles extends MyAccount {
 		require_once ROOT_DIR . '/sys/Grouping/GroupedWork.php';
 		require_once ROOT_DIR . '/RecordDrivers/GroupedWorkDriver.php';
 
-		$page = $_REQUEST['page'] ?? 1;
-		$pageSize = $_REQUEST['pageSize'] ?? 20;
+		$page = $this->getRequestedPage();
+		$pageSize = $this->getRequestedPageSize(20);
 
 		$user = UserAccount::getActiveUserObj();
 		$numNotInterested = $user->getNumNotInterested();

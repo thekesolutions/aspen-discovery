@@ -4477,9 +4477,9 @@ class MyAccount_AJAX extends JSON_Action {
 		//Load user ratings
 		require_once ROOT_DIR . '/sys/Events/UserEventsEntry.php';
 
-		$page = $_REQUEST['page'] ?? 1;
+		$page = $this->getRequestedPage();
 		$interface->assign('page', $page);
-		$pageSize = $_REQUEST['pageSize'] ?? 20;
+		$pageSize = $this->getRequestedPageSize(20);
 
 		$eventsFilter = $_REQUEST['eventsFilter'] ?? 'upcoming';
 		$curTime = time();
