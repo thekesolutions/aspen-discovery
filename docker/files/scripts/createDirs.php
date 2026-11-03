@@ -42,7 +42,7 @@ try {
 		DockerLogger::info("Created data directory: {$dataDir}");
 	}
 
-	$subdirectories = ['images', 'files', 'fonts'];
+	$subdirectories = ['images', 'files', 'fonts', 'sitemaps'];
 	foreach ($subdirectories as $subdirectory) {
 		if (!file_exists("$dataDir/$subdirectory")) {
 			mkdir("$dataDir/$subdirectory", 0755, true);

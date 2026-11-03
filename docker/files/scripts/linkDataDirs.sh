@@ -1,6 +1,6 @@
 #!/bin/bash
 # Sourced by start.sh and cron.sh, the containers that run Aspen's PHP and Java code. They must
-# write files/, images/ and fonts/ to the data volume, where Apache serves them from
+# write files/, images/, fonts/ and sitemaps/ to the data volume, where Apache serves them from
 # (data-alias.conf), not into the image's own copy.
 # Requires $SITE_NAME and a log_info function.
 
@@ -9,7 +9,7 @@ link_data_dirs() {
 	local localDir="/usr/local/aspen-discovery/code/web"
 	local dir source dest
 
-	for dir in files images fonts; do
+	for dir in files images fonts sitemaps; do
 		source="$localDir/$dir"
 		dest="$dataDir/$dir"
 
