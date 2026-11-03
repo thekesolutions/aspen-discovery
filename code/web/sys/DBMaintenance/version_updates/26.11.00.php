@@ -43,6 +43,16 @@ function getUpdates26_11_00(): array {
 		//mark j
 
 		//lucas
+		'oauth2_rate_limits_per_client' => [
+			'title' => 'OAuth2 rate limits per client',
+			'description' => 'Count OAuth2 API requests per client and endpoint',
+			'continueOnError' => false,
+			'sql' => [
+				// The stored counters belong to placeholder client ids and expire within the hour anyway
+				'TRUNCATE TABLE oauth2_rate_limits',
+				'ALTER TABLE oauth2_rate_limits DROP INDEX unique_rate_limit, ADD UNIQUE KEY unique_rate_limit (client_id, endpoint)',
+			],
+		], //oauth2_rate_limits_per_client
 
 		//tomas
 

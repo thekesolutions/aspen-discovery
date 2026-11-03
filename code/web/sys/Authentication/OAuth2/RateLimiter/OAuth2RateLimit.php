@@ -85,16 +85,19 @@ class OAuth2RateLimit extends DataObject {
 	}
 
 	/**
-	 * Get current rate limit record or create new one
+	 * Get current rate limit record or create new one. Requests are counted per client and
+	 * endpoint whatever address they come from; the address of the latest request is kept.
 	 */
 	public static function getRateLimitRecord(string $clientId, string $ipAddress, string $endpoint): OAuth2RateLimit {
 		$rateLimitRecord = new OAuth2RateLimit();
 		$rateLimitRecord->client_id = $clientId;
-		$rateLimitRecord->ip_address = $ipAddress;
 		$rateLimitRecord->endpoint = $endpoint;
 
-		if (!$rateLimitRecord->find(true)) {
+		if ($rateLimitRecord->find(true)) {
+			$rateLimitRecord->ip_address = $ipAddress;
+		} else {
 			// Create new record
+			$rateLimitRecord->ip_address = $ipAddress;
 			$rateLimitRecord->request_count = 0;
 			$rateLimitRecord->insert();
 		}
