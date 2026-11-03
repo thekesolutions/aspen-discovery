@@ -62,6 +62,11 @@ RUN apt -y update \
 	&& rm -rf /var/lib/apt/lists/*
 
 
+# Raise PHP's default upload limits for php-fpm, which runs Aspen's web requests in the backend service
+COPY docker/files/php/99-aspen-uploads.ini /tmp/99-aspen-uploads.ini
+RUN for confDir in /etc/php/*/fpm/conf.d; do cp /tmp/99-aspen-uploads.ini "$confDir/"; done \
+	&& rm /tmp/99-aspen-uploads.ini
+
 # Enable required Apache modules
 RUN a2enmod proxy_fcgi setenvif rewrite
 RUN a2dissite 000-default
