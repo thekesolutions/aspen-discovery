@@ -470,10 +470,11 @@ class Admin_AJAX extends JSON_Action {
 		$toolName = $_REQUEST['toolName'];
 		$batchUpdateScope = $_REQUEST['batchUpdateScope'];
 
-		require_once ROOT_DIR . '/services/' . $moduleName . '/' . $toolName . '.php';
-		$fullToolName = $moduleName . '_' . $toolName;
-		/** @var ObjectEditor $tool */
-		$tool = new $fullToolName();
+		require_once ROOT_DIR . '/services/AdminToolService.php';
+		$tool = AdminToolService::loadObjectEditor($moduleName, $toolName);
+		if ($tool === null) {
+			return $this->failureResultAdmin(null, 'Unknown tool');
+		}
 		$this->checkRequiredPermission($tool->getViewPermissions());
 
 		if ($tool->canBatchEdit()) {
@@ -513,10 +514,11 @@ class Admin_AJAX extends JSON_Action {
 			return $this->failureResultAdmin(null, 'New Value was not provided');
 		}
 
-		require_once ROOT_DIR . '/services/' . $moduleName . '/' . $toolName . '.php';
-		$fullToolName = $moduleName . '_' . $toolName;
-		/** @var ObjectEditor $tool */
-		$tool = new $fullToolName();
+		require_once ROOT_DIR . '/services/AdminToolService.php';
+		$tool = AdminToolService::loadObjectEditor($moduleName, $toolName);
+		if ($tool === null) {
+			return $this->failureResultAdmin(null, 'Unknown tool');
+		}
 		$this->checkRequiredPermission($tool->getViewPermissions());
 
 		if ($tool->canBatchEdit()) {
@@ -952,10 +954,11 @@ class Admin_AJAX extends JSON_Action {
 		$toolName = $_REQUEST['toolName'];
 		$batchDeleteScope = $_REQUEST['batchDeleteScope'];
 
-		require_once ROOT_DIR . '/services/' . $moduleName . '/' . $toolName . '.php';
-		$fullToolName = $moduleName . '_' . $toolName;
-		/** @var ObjectEditor $tool */
-		$tool = new $fullToolName();
+		require_once ROOT_DIR . '/services/AdminToolService.php';
+		$tool = AdminToolService::loadObjectEditor($moduleName, $toolName);
+		if ($tool === null) {
+			return $this->failureResultAdmin(null, 'Unknown tool');
+		}
 
 		if ($tool->canBatchDelete()) {
 			$numObjects = $tool->getNumObjects();
@@ -989,10 +992,11 @@ class Admin_AJAX extends JSON_Action {
 		$toolName = $_REQUEST['toolName'];
 		$batchDeleteScope = $_REQUEST['batchDeleteScope'];
 
-		require_once ROOT_DIR . '/services/' . $moduleName . '/' . $toolName . '.php';
-		$fullToolName = $moduleName . '_' . $toolName;
-		/** @var ObjectEditor $tool */
-		$tool = new $fullToolName();
+		require_once ROOT_DIR . '/services/AdminToolService.php';
+		$tool = AdminToolService::loadObjectEditor($moduleName, $toolName);
+		if ($tool === null) {
+			return $this->failureResultAdmin(null, 'Unknown tool');
+		}
 
 		if ($tool->canBatchDelete()) {
 			if ($batchDeleteScope == 'all') {
@@ -1088,10 +1092,11 @@ class Admin_AJAX extends JSON_Action {
 		$moduleName = $_REQUEST['moduleName'];
 		$toolName = $_REQUEST['toolName'];
 
-		require_once ROOT_DIR . '/services/' . $moduleName . '/' . $toolName . '.php';
-		$fullToolName = $moduleName . '_' . $toolName;
-		/** @var ObjectEditor $tool */
-		$tool = new $fullToolName();
+		require_once ROOT_DIR . '/services/AdminToolService.php';
+		$tool = AdminToolService::loadObjectEditor($moduleName, $toolName);
+		if ($tool === null) {
+			return $this->failureResultAdmin(null, 'Unknown tool');
+		}
 
 		$objectStructure = $tool->getObjectStructure();
 		if ($tool->canFilter($objectStructure)) {
@@ -1127,10 +1132,11 @@ class Admin_AJAX extends JSON_Action {
 		$toolName = $_REQUEST['toolName'];
 		$selectedFilter = $_REQUEST['selectedFilter'];
 
-		require_once ROOT_DIR . '/services/' . $moduleName . '/' . $toolName . '.php';
-		$fullToolName = $moduleName . '_' . $toolName;
-		/** @var ObjectEditor $tool */
-		$tool = new $fullToolName();
+		require_once ROOT_DIR . '/services/AdminToolService.php';
+		$tool = AdminToolService::loadObjectEditor($moduleName, $toolName);
+		if ($tool === null) {
+			return $this->failureResultAdmin(null, 'Unknown tool');
+		}
 		$this->checkRequiredPermission($tool->getViewPermissions());
 		$objectStructure = $tool->getObjectStructure();
 		if ($tool->canFilter($objectStructure)) {
