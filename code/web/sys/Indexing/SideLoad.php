@@ -195,7 +195,7 @@ class SideLoad extends DataObject {
 					'required' => true,
 					'default' => "/data/aspen-discovery/$serverName/{sideload_name}/marc",
 					'forcesReindex' => true,
-					'readOnly' => !UserAccount::userHasPermission(['Administer All Side Loads']),
+					'readOnly' => true,
 				],
 			];
 		}
@@ -511,9 +511,6 @@ class SideLoad extends DataObject {
 			}
 			if (isset($structure['deletedRecordsIds'])) {
 				$structure['deletedRecordsIds']['readOnly'] = true;
-			}
-			if (isset($structure['marcPath'])) {
-				$structure['marcPath']['readOnly'] = true;
 			}
 			$structure['filenamesToInclude']['readOnly'] = true;
 			$structure['marcEncoding']['readOnly'] = true;
