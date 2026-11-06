@@ -528,10 +528,23 @@ class SystemAPI extends AbstractAPI {
 			foreach ($sqlStatements as $sql) {
 				//Give enough time for long queries to run
 
-				if (method_exists($this, $sql)) {
-					$this->$sql($updateToRun);
-				} elseif (function_exists($sql)) {
-					$sql($updateToRun);
+				if (method_exists($this, $sql) || function_exists($sql)) {
+					// Only the function's own result counts, not one left by an earlier statement that may continue on error
+					$previousSuccess = $updateToRun['success'] ?? null;
+					unset($updateToRun['success']);
+					if (method_exists($this, $sql)) {
+						$this->$sql($updateToRun);
+					} else {
+						$sql($updateToRun);
+					}
+					// A function that reports a failure is not marked as run, so the update runs again next time
+					if (($updateToRun['success'] ?? true) === false) {
+						$updateOk = false;
+						break;
+					}
+					if (!isset($updateToRun['success']) && $previousSuccess !== null) {
+						$updateToRun['success'] = $previousSuccess;
+					}
 				} else {
 					if (!$this->runSQLStatement($updateToRun, $sql)) {
 						$updateOk = false;
