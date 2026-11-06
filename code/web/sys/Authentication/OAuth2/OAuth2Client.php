@@ -203,6 +203,7 @@ class OAuth2Client extends DataObject {
 			'fine:read' => 'Fine API Read Access',
 			'community:read' => 'Community API Read Access',
 			'community:write' => 'Community API Write Access',
+			'storage:write' => 'Storage API Write Access',
 		];
 	}
 

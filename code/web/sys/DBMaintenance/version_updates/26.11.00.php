@@ -111,6 +111,14 @@ function getUpdates26_11_00(): array {
 				"ALTER TABLE storage_settings ADD COLUMN deleteDelayDays INT NOT NULL DEFAULT 7",
 			],
 		], //storage_settings_delete_delay
+		'storage_api_oauth2_client' => [
+			'title' => 'Add the storage API OAuth2 client',
+			'description' => 'Service client that background processes use to store files through the storage API.',
+			'continueOnError' => false,
+			'sql' => [
+				'createStorageApiOAuth2Client',
+			],
+		], //storage_api_oauth2_client
 		'storage_migrate_theme_images' => [
 			'title' => 'Move theme images to the storage registry',
 			'description' => 'Registers every theme image where it is, so its URL does not change. Images whose file is missing are cleared and listed.',
@@ -136,6 +144,42 @@ function getUpdates26_11_00(): array {
 
 
 	];
+}
+
+/**
+ * The Java exporters find this client as the active service client with the storage:write scope,
+ * so an admin can rotate its secret, or replace the client, from the OAuth2 clients page.
+ *
+ * @noinspection PhpUnused
+ */
+function createStorageApiOAuth2Client(&$update): void {
+	global $aspen_db;
+	$existing = $aspen_db->query("SELECT COUNT(*) FROM oauth2_clients WHERE client_type = 'service_application' AND FIND_IN_SET('storage:write', scopes) > 0")->fetchColumn();
+	if ($existing == 0) {
+		require_once ROOT_DIR . '/sys/Authentication/OAuth2/OAuth2Client.php';
+		$client = new OAuth2Client();
+		$client->__set('name', 'Aspen Storage');
+		$client->__set('client_type', 'service_application');
+		$client->__set('scopes', ['storage:write']);
+		$client->__set('redirect_uri', '');
+		$client->__set('is_active', 1);
+		// Exporters send one request per cover, the default of 100 an hour would take days for a catalog.
+		$client->__set('rate_limit_requests', 1200);
+		$client->__set('rate_limit_window', 60);
+		if (!$client->insert()) {
+			$update['success'] = false;
+			$update['status'] = translate([
+				'text' => 'Could not create the storage API OAuth2 client',
+				'isAdminFacing' => true,
+			]);
+			return;
+		}
+	}
+	$update['success'] = true;
+	$update['status'] = translate([
+		'text' => 'The storage API OAuth2 client exists',
+		'isAdminFacing' => true,
+	]);
 }
 
 /** @noinspection PhpUnused */
