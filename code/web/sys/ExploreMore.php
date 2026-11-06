@@ -171,8 +171,8 @@ class ExploreMore {
 					$numCatalogResults = $results['response']['numFound'];
 					if ($numCatalogResults > 1) {
 						//check for custom image
-						if ($appliedTheme != null && !empty($appliedTheme->libraryWebsiteImage)) {
-							$image = '/files/original/' . $appliedTheme->libraryWebsiteImage;
+						if ($appliedTheme != null && !empty($appliedTheme->getStoredFileUrl('libraryWebsiteImage'))) {
+							$image = $appliedTheme->getStoredFileUrl('libraryWebsiteImage');
 						} else{
 							$image = '/images/webpage.png';
 						}
@@ -257,8 +257,8 @@ class ExploreMore {
 					$numCatalogResults = $results['response']['numFound'];
 					if ($numCatalogResults > 1) {
 						//check for custom image
-						if ($appliedTheme != null && !empty($appliedTheme->eventsImage)) {
-							$image = '/files/original/' . $appliedTheme->eventsImage;
+						if ($appliedTheme != null && !empty($appliedTheme->getStoredFileUrl('eventsImage'))) {
+							$image = $appliedTheme->getStoredFileUrl('eventsImage');
 						} else{
 							$image = '/interface/themes/responsive/images/events.png';
 						}
@@ -326,8 +326,8 @@ class ExploreMore {
 					$numCatalogResults = $results['response']['numFound'];
 					if ($numCatalogResults > 1) {
 						//check for custom image
-						if ($appliedTheme != null && !empty($appliedTheme->listsImage)) {
-							$image = '/files/original/' . $appliedTheme->listsImage;
+						if ($appliedTheme != null && !empty($appliedTheme->getStoredFileUrl('listsImage'))) {
+							$image = $appliedTheme->getStoredFileUrl('listsImage');
 						} else{
 							$image = '/interface/themes/responsive/images/library_symbol.png';
 						}
@@ -395,8 +395,8 @@ class ExploreMore {
 					$numCatalogResults = $results['response']['numFound'];
 					if ($numCatalogResults > 1) {
 						//check for custom image
-						if ($appliedTheme != null && !empty($appliedTheme->seriesImage)) {
-							$image = '/files/original/' . $appliedTheme->seriesImage;
+						if ($appliedTheme != null && !empty($appliedTheme->getStoredFileUrl('seriesImage'))) {
+							$image = $appliedTheme->getStoredFileUrl('seriesImage');
 						} else{
 							$image = '/interface/themes/responsive/images/library_symbol.png';
 						}
@@ -463,8 +463,8 @@ class ExploreMore {
 					$numCatalogResults = $results['response']['numFound'];
 					if ($numCatalogResults > 1) {
 						//check for custom image
-						if ($appliedTheme != null && !empty($appliedTheme->historyArchivesImage)) {
-							$image = '/files/original/' . $appliedTheme->historyArchivesImage;
+						if ($appliedTheme != null && !empty($appliedTheme->getStoredFileUrl('historyArchivesImage'))) {
+							$image = $appliedTheme->getStoredFileUrl('historyArchivesImage');
 						} else{
 							$image = '/interface/themes/responsive/images/library_symbol.png';
 						}
@@ -562,8 +562,8 @@ class ExploreMore {
 						$numCatalogResults = $results['response']['numFound'];
 						if ($numCatalogResultsAdded == $this->numEntriesToAdd && $numCatalogResults > ($this->numEntriesToAdd + 1)) {
 							//check for custom image
-							if ($appliedTheme != null && !empty($appliedTheme->catalogImage)) {
-								$image = '/files/original/' . $appliedTheme->catalogImage;
+							if ($appliedTheme != null && !empty($appliedTheme->getStoredFileUrl('catalogImage'))) {
+								$image = $appliedTheme->getStoredFileUrl('catalogImage');
 							} else{
 								$image = '/interface/themes/responsive/images/library_symbol.png';
 							}
@@ -658,8 +658,8 @@ class ExploreMore {
 				}
 				if ($hasMatches) {
 					//check for custom image
-					if ($appliedTheme != null && !empty($appliedTheme->articlesDBImage)) {
-						$image = '/files/original/' . $appliedTheme->articlesDBImage;
+					if ($appliedTheme != null && !empty($appliedTheme->getStoredFileUrl('articlesDBImage'))) {
+						$image = $appliedTheme->getStoredFileUrl('articlesDBImage');
 					} else{
 						$image = '/interface/themes/responsive/images/ebscohost.png';
 					}
@@ -741,8 +741,8 @@ class ExploreMore {
 
 						if ($numMatches > 1) {
 							//check for custom image
-							if ($appliedTheme != null && !empty($appliedTheme->articlesDBImage)) {
-								$image = '/files/original/' . $appliedTheme->articlesDBImage;
+							if ($appliedTheme != null && !empty($appliedTheme->getStoredFileUrl('articlesDBImage'))) {
+								$image = $appliedTheme->getStoredFileUrl('articlesDBImage');
 							} else{
 								$image = '/interface/themes/responsive/images/ebsco_eds.png';
 							}
@@ -793,8 +793,8 @@ class ExploreMore {
 				$exploreMoreOptions['sampleRecords']['summon'] = [];
 				$numMatches = $summonResults['recordCount'];
 				if ($numMatches > 1) {
-					if ($appliedTheme != null && !empty($appliedTheme->articlesDBImage)) {
-						$image = '/files/origional/' . $appliedTheme->articlesDBImage;
+					if ($appliedTheme != null && !empty($appliedTheme->getStoredFileUrl('articlesDBImage'))) {
+						$image = $appliedTheme->getStoredFileUrl('articlesDBImage');
 					} else {
 						$image = '/interface/themes/responsive/images/summon.png';
 					}
@@ -837,8 +837,8 @@ class ExploreMore {
 				$exploreMoreOptions['sampleRecords']['gale'] = [];
 				$numMatches = $galeSearcher->getResultSummary()['resultTotal'];
 				if ($numMatches > 1) {
-					if ($appliedTheme != null && !empty($appliedTheme->articlesDBImage)) {
-						$image = '/files/origional/' . $appliedTheme->articlesDBImage;
+					if ($appliedTheme != null && !empty($appliedTheme->getStoredFileUrl('articlesDBImage'))) {
+						$image = $appliedTheme->getStoredFileUrl('articlesDBImage');
 					} else {
 						$image = '/interface/themes/responsive/images/gale.png';
 					}
@@ -902,8 +902,8 @@ class ExploreMore {
 						$exploreMoreOptions['sampleRecords']['cloudsource'] = [];
 						$numMatches = $cloudSourceSearcher->getresultsTotal();
 						if ($numMatches > 1) {
-							if ($appliedTheme != null && !empty($appliedTheme->articlesDBImage)) {
-								$image = '/files/original/' . $appliedTheme->articlesDBImage;
+							if ($appliedTheme != null && !empty($appliedTheme->getStoredFileUrl('articlesDBImage'))) {
+								$image = $appliedTheme->getStoredFileUrl('articlesDBImage');
 							} else {
 								$image = '/interface/themes/responsive/images/cloudsource.png';
 							}
@@ -972,8 +972,8 @@ class ExploreMore {
 					$numCatalogResults = $results['response']['numFound'];
 					if ($numCatalogResults > 1) {
 						//check for custom image
-						if ($appliedTheme != null && !empty($appliedTheme->genealogyImage)) {
-							$image = '/files/original/' . $appliedTheme->genealogyImage;
+						if ($appliedTheme != null && !empty($appliedTheme->getStoredFileUrl('genealogyImage'))) {
+							$image = $appliedTheme->getStoredFileUrl('genealogyImage');
 						} else{
 							$image = '/interface/themes/responsive/images/person.png';
 						}

@@ -631,6 +631,8 @@ class Theme extends DataObject {
 	}
 
 	static $_objectStructure = [];
+	/** @var array[]|null */
+	private static ?array $_imageProperties = null;
 	static function getObjectStructure(string $context = ''): array {
 		if (isset(self::$_objectStructure[$context])) {
 			return self::$_objectStructure[$context];
@@ -2682,6 +2684,13 @@ class Theme extends DataObject {
 			$objectStructure['locations']['additionalOneToManyActions'] = [];
 		}
 
+		self::useStorageRegistryForImages($objectStructure);
+		// Collected before sections are hidden, since hidden images still have to be migrated and copied.
+		if (self::$_imageProperties === null) {
+			self::$_imageProperties = [];
+			self::collectImageProperties($objectStructure, self::$_imageProperties);
+		}
+
 		// Only show the Aspen LiDA section if the module is enabled
 		global $enabledModules;
 		if (!array_key_exists('Aspen LiDA', $enabledModules)) {
@@ -2690,6 +2699,57 @@ class Theme extends DataObject {
 
 		self::$_objectStructure[$context] = $objectStructure;
 		return self::$_objectStructure[$context];
+	}
+
+	/**
+	 * Every theme image is stored in the storage registry, owned by the theme.
+	 */
+	private static function useStorageRegistryForImages(array &$structure) : void {
+		foreach ($structure as &$property) {
+			if ($property['type'] == 'section') {
+				self::useStorageRegistryForImages($property['properties']);
+			} elseif ($property['type'] == 'image') {
+				$property['storage'] = 'registry';
+			}
+		}
+	}
+
+	/**
+	 * URL of the first theme in the chain that has the image, as theme images are inherited.
+	 *
+	 * @param Theme[] $appliedThemes
+	 */
+	public static function getFirstImageUrl(array $appliedThemes, string $propertyName) : string {
+		foreach ($appliedThemes as $theme) {
+			$imageUrl = $theme->getStoredFileUrl($propertyName);
+			if (!empty($imageUrl)) {
+				return $imageUrl;
+			}
+		}
+		return '';
+	}
+
+	/**
+	 * Definitions of every image property of a theme, by property name, including the ones in
+	 * sections that are hidden because their module is disabled.
+	 *
+	 * @return array[]
+	 */
+	public static function getImageProperties() : array {
+		if (self::$_imageProperties === null) {
+			self::getObjectStructure();
+		}
+		return self::$_imageProperties;
+	}
+
+	private static function collectImageProperties(array $structure, array &$imageProperties) : void {
+		foreach ($structure as $property) {
+			if ($property['type'] == 'section') {
+				self::collectImageProperties($property['properties'], $imageProperties);
+			} elseif ($property['type'] == 'image') {
+				$imageProperties[$property['property']] = $property;
+			}
+		}
 	}
 
 	/** @noinspection PhpUnused */
@@ -3003,15 +3063,42 @@ class Theme extends DataObject {
 		return $ret;
 	}
 
+	/**
+	 * Gives the copy its own copy of each image of the source theme that was not replaced or
+	 * removed in the copy form, so each theme can later delete its files independently.
+	 */
+	public function finishCopy($sourceId) : void {
+		parent::finishCopy($sourceId);
+		require_once ROOT_DIR . '/sys/Storage/StorageObject.php';
+		$sourceTheme = new Theme();
+		$sourceTheme->id = $sourceId;
+		if (!$sourceTheme->find(true)) {
+			return;
+		}
+		$numCopied = 0;
+		foreach (array_keys(self::getImageProperties()) as $propertyName) {
+			if (isset($_REQUEST["remove$propertyName"]) || $this->getStoredFile($propertyName) != null) {
+				continue;
+			}
+			$numCopied += StorageObject::copyFiles($this->__table, (int)$sourceTheme->id, (int)$this->id, [$propertyName]);
+		}
+		if ($numCopied > 0) {
+			$this->generateCss(true);
+		}
+	}
+
 	public function delete(bool $useWhere = false, bool $hardDelete = false) : bool|int {
 		$deleted = parent::delete($useWhere, $hardDelete);
 		if ($deleted) {
 			//Only clear libraries and locations if we are doing a hard delete and useWhere is off
 			//  - checking useWhere is needed because useWhere can delete multiple themes at once.
 			//    we probably should get a list of all the objects that were deleted so we can clean up the links for all of them.
+			//    Images of themes deleted with useWhere are released by the nightly orphan sweep.
 			if ($hardDelete && !$useWhere) {
 				$this->clearLibraries();
 				$this->clearLocations();
+				require_once ROOT_DIR . '/sys/Storage/StorageObject.php';
+				StorageObject::release($this->__table, (int)$this->id);
 			}
 			$this->clearDefaultCovers();
 		}
@@ -3171,7 +3258,7 @@ class Theme extends DataObject {
 		$interface->assign('headerBackgroundColor', $this->headerBackgroundColor);
 		$interface->assign('headerForegroundColor', $this->headerForegroundColor);
 		$interface->assign('focusColor', $this->focusColor);
-		$interface->assign('headerBackgroundImage', $this->headerBackgroundImage);
+		$interface->assign('headerBackgroundImage', $this->getStoredFileUrl('headerBackgroundImage'));
 		$interface->assign('headerBackgroundImageSize', $this->headerBackgroundImageSize);
 		$interface->assign('headerBackgroundImageRepeat', $this->headerBackgroundImageRepeat);
 		$interface->assign('pageBackgroundColor', $this->pageBackgroundColor);
@@ -3451,6 +3538,9 @@ class Theme extends DataObject {
 				}
 			}
 			$this->_allAppliedThemes = $allAppliedThemes;
+			// Load the images of the whole chain with one query.
+			require_once ROOT_DIR . '/sys/Storage/StorageObject.php';
+			StorageObject::getForOwners($this->__table, array_map(fn(Theme $theme) => $theme->id, $allAppliedThemes));
 			if ($this->_themeHierarchy == null) {
 				$this->_themeHierarchy = array_reverse($this->_allAppliedThemes, true);
 			}
@@ -3787,9 +3877,9 @@ class Theme extends DataObject {
 		global $configArray;
 
 		$apiInfo = $this;
-		$this->logoName = $configArray['Site']['url'] . '/files/original/' . $this->logoName;
-		$this->favicon = $configArray['Site']['url'] . '/files/original/' . $this->favicon;
-		$this->headerLogoApp = $configArray['Site']['url'] . '/files/original/' . $this->headerLogoApp;
+		$this->logoName = $configArray['Site']['url'] . ($this->getStoredFileUrl('logoName') ?: '/files/original/');
+		$this->favicon = $configArray['Site']['url'] . ($this->getStoredFileUrl('favicon') ?: '/files/original/');
+		$this->headerLogoApp = $configArray['Site']['url'] . ($this->getStoredFileUrl('headerLogoApp') ?: '/files/original/');
 		unset($this->additionalCssType);
 		unset($this->additionalCss);
 		unset($this->generatedCss);

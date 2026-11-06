@@ -6925,21 +6925,21 @@ class Library extends DataObject {
 			$theme->id = $libraryTheme->themeId;
 			if ($theme->find(true)) {
 				$theme->applyDefaults();
-				if ($theme->logoName) {
-					$apiInfo['logo'] = $configArray['Site']['url'] . '/files/original/' . $theme->logoName;
+				if ($theme->getStoredFileUrl('logoName')) {
+					$apiInfo['logo'] = $configArray['Site']['url'] . $theme->getStoredFileUrl('logoName');
 				}
-				if ($theme->favicon) {
-					$apiInfo['favicon'] = $configArray['Site']['url'] . '/files/original/' . $theme->favicon;
+				if ($theme->getStoredFileUrl('favicon')) {
+					$apiInfo['favicon'] = $configArray['Site']['url'] . $theme->getStoredFileUrl('favicon');
 				}
-				if ($theme->logoApp) {
-					$apiInfo['logoApp'] = $configArray['Site']['url'] . '/files/original/' . $theme->logoApp;
+				if ($theme->getStoredFileUrl('logoApp')) {
+					$apiInfo['logoApp'] = $configArray['Site']['url'] . $theme->getStoredFileUrl('logoApp');
 				}
-				if ($theme->headerLogoApp) {
-					$apiInfo['headerLogoApp'] = $configArray['Site']['url'] . '/files/original/' . $theme->headerLogoApp;
+				if ($theme->getStoredFileUrl('headerLogoApp')) {
+					$apiInfo['headerLogoApp'] = $configArray['Site']['url'] . $theme->getStoredFileUrl('headerLogoApp');
 					[
 						$width,
 						$height,
-					] = @getimagesize(ROOT_DIR . '/files/original/' . $theme->headerLogoApp);
+					] = @getimagesizefromstring((string)$theme->getStoredFileContents('headerLogoApp'));
 					$apiInfo['headerLogoWidth'] = $width;
 					$apiInfo['headerLogoHeight'] = $height;
 				}

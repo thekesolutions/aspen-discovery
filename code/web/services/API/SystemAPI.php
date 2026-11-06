@@ -729,17 +729,29 @@ class SystemAPI extends AbstractAPI {
 
 			$dataPath = $configArray['Site']['local'] . '/files/original/';
 
-			if ($type === "logo") {
-				$fileName = $theme->logoName;
-			} elseif ($type === "favicon") {
-				$fileName = $theme->favicon;
-			} elseif ($type === "footerLogo") {
-				$fileName = $theme->footerLogo;
-			} elseif ($type === "logoApp") {
-				$fileName = $theme->logoApp;
-			} elseif ($type === "headerLogoApp") {
-				$fileName = $theme->headerLogoApp;
-			} elseif ($type === "appSplash") {
+			// Theme images are in the storage registry
+			$themeImageProperties = [
+				'logo' => 'logoName',
+				'favicon' => 'favicon',
+				'footerLogo' => 'footerLogo',
+				'logoApp' => 'logoApp',
+				'headerLogoApp' => 'headerLogoApp',
+			];
+			if (isset($themeImageProperties[$type])) {
+				$storedFile = $theme->getStoredFile($themeImageProperties[$type]);
+				$stream = $storedFile?->readStream();
+				if (!empty($stream)) {
+					set_time_limit(300);
+					header('Content-Type: ' . ($storedFile->mimeType == 'image/svg+xml' ? 'image/svg+xml' : 'image/png'));
+					header('Content-Transfer-Encoding: binary');
+					header('Content-Length: ' . (int)$storedFile->size);
+					fpassthru($stream);
+					fclose($stream);
+				}
+				die();
+			}
+
+			if ($type === "appSplash") {
 				$fileName = $app->logoSplash;
 			} elseif ($type === "appLogin") {
 				$fileName = $app->logoLogin;

@@ -481,22 +481,22 @@ class GreenhouseAPI extends AbstractAPI {
 
 						$themeArray['themeId'] = $theme->id;
 
-						if($theme->logoName) {
-							$themeArray['logo'] = $configArray['Site']['url'] . '/files/original/' . $theme->logoName;
+						if ($theme->getStoredFileUrl('logoName')) {
+							$themeArray['logo'] = $configArray['Site']['url'] . $theme->getStoredFileUrl('logoName');
 						}else{
 							$themeArray['logo'] = '';
 						}
-						if($theme->favicon) {
-							$themeArray['favicon'] = $configArray['Site']['url'] . '/files/original/' . $theme->favicon;
+						if ($theme->getStoredFileUrl('favicon')) {
+							$themeArray['favicon'] = $configArray['Site']['url'] . $theme->getStoredFileUrl('favicon');
 						}else{
 							$themeArray['favicon'] = '';
 						}
-						if($theme->headerLogoApp) {
-							$themeArray['headerLogo'] = $configArray['Site']['url'] . '/files/original/' . $theme->headerLogoApp;
+						if ($theme->getStoredFileUrl('headerLogoApp')) {
+							$themeArray['headerLogo'] = $configArray['Site']['url'] . $theme->getStoredFileUrl('headerLogoApp');
 							[
 								$width,
 								$height,
-							] = @getimagesize(ROOT_DIR . '/files/original/' . $theme->headerLogoApp);
+							] = @getimagesizefromstring((string)$theme->getStoredFileContents('headerLogoApp'));
 							$themeArray['headerLogoWidth'] = $width;
 							$themeArray['headerLogoHeight'] = $height;
 						}else{

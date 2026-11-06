@@ -77,38 +77,38 @@ class TopFacets implements RecommendationInterface {
 				foreach ($facetSet['list'] as $facetKey => $facet) {
 					if (!empty($facetKey) && array_key_exists($facetKey, TopFacets::$formatCategorySortOrder)) {
 						if ($appliedTheme != null){
-							if (strtolower($facet['value']) == "books" && !empty($appliedTheme->booksImage)){
-								$facet['imageName'] = '/files/original/' . $appliedTheme->booksImage;
-								if (!empty($appliedTheme->booksImageSelected)){
-									$facet['imageNameSelected'] = '/files/original/' . $appliedTheme->booksImageSelected;
+							if (strtolower($facet['value']) == "books" && !empty($appliedTheme->getStoredFileUrl('booksImage'))){
+								$facet['imageName'] = $appliedTheme->getStoredFileUrl('booksImage');
+								if (!empty($appliedTheme->getStoredFileUrl('booksImageSelected'))){
+									$facet['imageNameSelected'] = $appliedTheme->getStoredFileUrl('booksImageSelected');
 								}else{
 									$facet['imageNameSelected'] = strtolower(str_replace(' ', '', $facet['value'])) . "_selected.png";
 								}
-							}elseif (strtolower($facet['value']) == "ebook" && !empty($appliedTheme->eBooksImage)){
-								$facet['imageName'] = '/files/original/' . $appliedTheme->eBooksImage;
-								if (!empty($appliedTheme->eBooksImageSelected)){
-									$facet['imageNameSelected'] = '/files/original/' . $appliedTheme->eBooksImageSelected;
+							}elseif (strtolower($facet['value']) == "ebook" && !empty($appliedTheme->getStoredFileUrl('eBooksImage'))){
+								$facet['imageName'] = $appliedTheme->getStoredFileUrl('eBooksImage');
+								if (!empty($appliedTheme->getStoredFileUrl('eBooksImageSelected'))){
+									$facet['imageNameSelected'] = $appliedTheme->getStoredFileUrl('eBooksImageSelected');
 								}else{
 									$facet['imageNameSelected'] = strtolower(str_replace(' ', '', $facet['value'])) . "_selected.png";
 								}
-							}elseif (strtolower($facet['value']) == "audio books" && !empty($appliedTheme->audioBooksImage)){
-								$facet['imageName'] = '/files/original/' . $appliedTheme->audioBooksImage;
-								if (!empty($appliedTheme->audioBooksImageSelected)){
-									$facet['imageNameSelected'] = '/files/original/' . $appliedTheme->audioBooksImageSelected;
+							}elseif (strtolower($facet['value']) == "audio books" && !empty($appliedTheme->getStoredFileUrl('audioBooksImage'))){
+								$facet['imageName'] = $appliedTheme->getStoredFileUrl('audioBooksImage');
+								if (!empty($appliedTheme->getStoredFileUrl('audioBooksImageSelected'))){
+									$facet['imageNameSelected'] = $appliedTheme->getStoredFileUrl('audioBooksImageSelected');
 								}else{
 									$facet['imageNameSelected'] = strtolower(str_replace(' ', '', $facet['value'])) . "_selected.png";
 								}
-							}elseif (strtolower($facet['value']) == "music" && !empty($appliedTheme->musicImage)){
-								$facet['imageName'] = '/files/original/' . $appliedTheme->musicImage;
-								if (!empty($appliedTheme->musicImageSelected)){
-									$facet['imageNameSelected'] = '/files/original/' . $appliedTheme->musicImageSelected;
+							}elseif (strtolower($facet['value']) == "music" && !empty($appliedTheme->getStoredFileUrl('musicImage'))){
+								$facet['imageName'] = $appliedTheme->getStoredFileUrl('musicImage');
+								if (!empty($appliedTheme->getStoredFileUrl('musicImageSelected'))){
+									$facet['imageNameSelected'] = $appliedTheme->getStoredFileUrl('musicImageSelected');
 								}else{
 									$facet['imageNameSelected'] = strtolower(str_replace(' ', '', $facet['value'])) . "_selected.png";
 								}
-							}elseif (strtolower($facet['value']) == "movies" && !empty($appliedTheme->moviesImage)){
-								$facet['imageName'] = '/files/original/' . $appliedTheme->moviesImage;
-								if (!empty($appliedTheme->moviesImageSelected)){
-									$facet['imageNameSelected'] = '/files/original/' . $appliedTheme->moviesImageSelected;
+							}elseif (strtolower($facet['value']) == "movies" && !empty($appliedTheme->getStoredFileUrl('moviesImage'))){
+								$facet['imageName'] = $appliedTheme->getStoredFileUrl('moviesImage');
+								if (!empty($appliedTheme->getStoredFileUrl('moviesImageSelected'))){
+									$facet['imageNameSelected'] = $appliedTheme->getStoredFileUrl('moviesImageSelected');
 								}else{
 									$facet['imageNameSelected'] = strtolower(str_replace(' ', '', $facet['value'])) . "_selected.png";
 								}

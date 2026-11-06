@@ -14,7 +14,10 @@ class DefaultCoverImageBuilder {
 	private $authorFont;
 	private $backgroundColor;
 	private $foregroundColor;
-	private $defaultCoverImage;
+	// Contents of the theme background image, read the first time a cover is drawn.
+	private ?string $defaultCoverImage = null;
+	// Theme whose background image is drawn on the covers.
+	private ?Theme $defaultCoverTheme = null;
 
 	public function __construct($invertColors = false, int $imageWidth = 280, int $imageHeight = 400) {
 		$this->imageWidth = $imageWidth;
@@ -67,8 +70,8 @@ class DefaultCoverImageBuilder {
 					$this->backgroundColor = $this->foregroundColor;
 					$this->foregroundColor = $tmpColor;
 				}
-				if (!empty($theme->defaultCover)) {
-					$this->defaultCoverImage = ROOT_DIR . '/files/original/' . $theme->defaultCover;
+				if ($theme->getStoredFileFingerprint('defaultCover') !== '') {
+					$this->defaultCoverTheme = $theme;
 				}
 			}
 		}
@@ -103,7 +106,15 @@ class DefaultCoverImageBuilder {
 		}
 	}
 
+	private function loadDefaultCoverImage(): void {
+		if ($this->defaultCoverTheme != null && $this->defaultCoverImage === null) {
+			$contents = $this->defaultCoverTheme->getStoredFileContents('defaultCover');
+			$this->defaultCoverImage = $contents === false ? '' : $contents;
+		}
+	}
+
 	public function getCover($title, ?string $author, $filename, $image = null): void {
+		$this->loadDefaultCoverImage();
 		$script = $this->detectScript($title . ($author ?? ''));
 		$this->selectFontForScript($script);
 
@@ -131,7 +142,7 @@ class DefaultCoverImageBuilder {
 			if (!empty($image)){
 				$imageInfo = getimagesize($image);
 			}else{
-				$imageInfo = getimagesize($this->defaultCoverImage);
+				$imageInfo = getimagesizefromstring($this->defaultCoverImage);
 			}
 
 			$originalHeight = $imageInfo[0];
@@ -152,7 +163,7 @@ class DefaultCoverImageBuilder {
 			if (!empty($image)) {
 				$uploadedImage = imagecreatefromstring(file_get_contents($image));
 			}else {
-				$uploadedImage = imagecreatefromstring(file_get_contents($this->defaultCoverImage));
+				$uploadedImage = imagecreatefromstring($this->defaultCoverImage);
 			}
 
 			$uploadedResized = imagescale($uploadedImage, $width, $height);

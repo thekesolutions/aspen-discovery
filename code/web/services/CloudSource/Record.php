@@ -20,8 +20,8 @@ class CloudSource_Record extends Action {
 			die();
 		}
 		$appliedTheme = $interface->getAppliedTheme();
-		if ($appliedTheme != null && !empty($appliedTheme->articlesDBImage)) {
-			$image = '/files/origional/' . $appliedTheme->articlesDBImage;
+		if ($appliedTheme != null && !empty($appliedTheme->getStoredFileUrl('articlesDBImage'))) {
+			$image = $appliedTheme->getStoredFileUrl('articlesDBImage');
 		} else {
 			$image = '/interface/themes/responsive/images/cloudsource.png';
 		}

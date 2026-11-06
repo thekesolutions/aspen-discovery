@@ -179,8 +179,9 @@ class AspenLiDA_Themes extends ObjectEditor {
 					'success' => true,
 					'data' => [
 						'isDarkColorScheme' => (bool)$webTheme->isDarkColorScheme,
-						'logoApp' => $webTheme->logoApp ?? '',
-						'headerLogoApp' => $webTheme->headerLogoApp ?? '',
+						// The filename of the image as uploaded, empty when the theme has none, as before the storage registry
+						'logoApp' => $webTheme->getStoredFile('logoApp')?->originalName ?? '',
+						'headerLogoApp' => $webTheme->getStoredFile('headerLogoApp')?->originalName ?? '',
 						'headerLogoAlignmentApp' => (int)($webTheme->headerLogoAlignmentApp ?? 2),
 						'headerLogoBackgroundColorApp' => $webTheme->headerLogoBackgroundColorApp ?? '#ffffff',
 						'primaryColor' => $webTheme->primaryBackgroundColor ?? Theme::$defaultPrimaryBackgroundColor,
