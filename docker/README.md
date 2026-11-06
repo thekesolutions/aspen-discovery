@@ -60,6 +60,7 @@ reset to its default.
 | `LOCAL_USER_ID` | | Every start | UID that should own the files in `ASPEN_HOME` (e.g. the output of `id -u`). Unset keeps the container's `www-data` |
 | `DEBUG` | `false` | Every start | Aspen debug mode |
 | `FILE_GROUP_OWNER` | `www-data` | Every start | Group assigned to directories Aspen creates for uploaded files |
+| `INTERNAL_URL` | `http://apache` | Every start | Address background jobs (e.g. the ILS exports storing covers) use to call Aspen's APIs. It must reach this site without going through the public URL; the default is the stack's own Apache service |
 
 ### Database
 

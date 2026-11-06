@@ -453,6 +453,13 @@ function getValidServerNames(): array {
 				$validServerNames[] = "$host";
 			}
 		}
+		// Background processes call the APIs through [Site] internalUrl, e.g. http://apache in Docker
+		if (!empty($configArray['Site']['internalUrl'])) {
+			$internalHost = parse_url($configArray['Site']['internalUrl'], PHP_URL_HOST);
+			if (!empty($internalHost)) {
+				$validServerNames[] = $internalHost;
+			}
+		}
 		//$memCache->set('validServerNames', $validServerNames, 5 * 60 * 60);
 	}
 	return $validServerNames;

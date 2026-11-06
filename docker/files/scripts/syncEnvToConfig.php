@@ -33,6 +33,7 @@ $envMapping = [
 	// Site (config.ini)
 	'TZ'                => ['config.ini', 'Site', 'timezone'],
 	'URL'               => ['config.ini', 'Site', 'url'],
+	'INTERNAL_URL'      => ['config.ini', 'Site', 'internalUrl'],
 	'TITLE'             => ['config.ini', 'Site', 'title'],
 	'LIBRARY'           => ['config.ini', 'Site', 'libraryName'],
 	'FILE_GROUP_OWNER'  => ['config.ini', 'Site', 'fileGroupOwner'],

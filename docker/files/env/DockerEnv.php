@@ -10,6 +10,8 @@ class DockerEnv {
 	const DEFAULTS = [
 		'SITE_NAME' => 'aspen',
 		'URL' => 'http://localhost:85',
+		// Each stack has one site, so the apache service answers for it without a matching host name
+		'INTERNAL_URL' => 'http://apache',
 		'TITLE' => 'Aspen Discovery',
 		'LIBRARY' => 'Test Library',
 		'SUPPORTING_COMPANY' => 'ByWater Solutions',
