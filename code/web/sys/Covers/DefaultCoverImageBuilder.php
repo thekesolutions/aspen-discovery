@@ -5,6 +5,8 @@ require_once ROOT_DIR . '/sys/Utils/StringUtils.php';
 require_once ROOT_DIR . '/sys/Covers/CoverImageUtils.php';
 
 class DefaultCoverImageBuilder {
+	// Part of the fingerprint: bump it when the drawing changes so stored default covers are redrawn.
+	private const LAYOUT_VERSION = 1;
 	private int $imageWidth;
 	private int $imageHeight;
 	private $topMargin = 10;
@@ -18,6 +20,8 @@ class DefaultCoverImageBuilder {
 	private ?string $defaultCoverImage = null;
 	// Theme whose background image is drawn on the covers.
 	private ?Theme $defaultCoverTheme = null;
+	// The theme colors, or null when the colors come from each title.
+	private ?array $themeColors = null;
 
 	public function __construct($invertColors = false, int $imageWidth = 280, int $imageHeight = 400) {
 		$this->imageWidth = $imageWidth;
@@ -82,6 +86,10 @@ class DefaultCoverImageBuilder {
 		}
 		$this->titleFont = realpath($this->titleFont);
 		$this->authorFont = realpath($this->authorFont);
+		// getCover() replaces both colors with ones derived from the title unless the themes set both
+		if (isset($this->backgroundColor) && isset($this->foregroundColor)) {
+			$this->themeColors = [$this->backgroundColor, $this->foregroundColor];
+		}
 	}
 
 	private function setForegroundAndBackgroundColors($title, $author) {
@@ -104,6 +112,22 @@ class DefaultCoverImageBuilder {
 			$this->foregroundColor = $this->backgroundColor;
 			$this->backgroundColor = $tmp;
 		}
+	}
+
+	/**
+	 * Identifies everything that changes how a cover looks besides the title and author, so a
+	 * stored cover can be reused by every library whose themes produce the same result.
+	 */
+	public function getFingerprint(): string {
+		return substr(sha1(json_encode([
+			self::LAYOUT_VERSION,
+			$this->imageWidth,
+			$this->imageHeight,
+			basename($this->titleFont ?: ''),
+			basename($this->authorFont ?: ''),
+			$this->themeColors,
+			$this->defaultCoverTheme?->getStoredFileFingerprint('defaultCover'),
+		])), 0, 16);
 	}
 
 	private function loadDefaultCoverImage(): void {

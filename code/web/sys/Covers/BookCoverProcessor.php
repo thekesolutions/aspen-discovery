@@ -1,5 +1,6 @@
 <?php
 require_once ROOT_DIR . '/sys/Covers/BookCoverInfo.php';
+require_once ROOT_DIR . '/sys/Storage/StorageObject.php';
 
 class BookCoverProcessor {
 	private const EVENT_DATE_COVER_DRIVERS = [
@@ -25,8 +26,11 @@ class BookCoverProcessor {
 	private string $type;
 	private string $cacheName;
 	private ?array $eventDateCoverProps = null;
+	// Working file for covers being generated or resized; the result is stored in the storage registry.
 	private string $cacheFile;
-	private string $defaultCoverCacheFile; //Includes servername so each member of a consortium can have different covers
+	// Generated covers that cannot be identified (unknown title) are shown but not stored.
+	private bool $doNotStore = false;
+	private ?string $defaultCoverFingerprint = null;
 	public ?string $error = null;
 	private GroupedWorkDriver|null|false $groupedWork = null;
 	private bool $reload;
@@ -531,9 +535,8 @@ class BookCoverProcessor {
 		if (array_key_exists($this->type, self::EVENT_DATE_COVER_DRIVERS)) {
 			$this->cacheName .= '~' . $this->getEventDateCoverFingerprint();
 		}
-		$this->cacheFile = $this->bookCoverPath . '/' . $this->size . '/' . $this->cacheName . '.png';
-		global $library;
-		$this->defaultCoverCacheFile = $this->bookCoverPath . '/' . $this->size . '/' . $library->subdomain . '_' . $this->cacheName . '.png';
+		$this->cacheFile = sys_get_temp_dir() . '/aspen_cover_' . bin2hex(random_bytes(8)) . '.png';
+		$this->deleteAtShutdown($this->cacheFile);
 		$this->logTime("load parameters");
 		return true;
 	}
@@ -551,7 +554,10 @@ class BookCoverProcessor {
 	private function addModificationHeaders($filename) : bool {
 		$timestamp = filemtime($filename);
 		$this->logTime("Got file timestamp $timestamp");
-		$last_modified = substr(date('r', $timestamp), 0, -5) . 'GMT';
+		return $this->addModificationHeadersFor(substr(date('r', $timestamp), 0, -5) . 'GMT');
+	}
+
+	private function addModificationHeadersFor(string $last_modified) : bool {
 		$etag = '"' . md5($last_modified) . '"';
 		$this->logTime("Got last_modified $last_modified and etag $etag");
 		// Send the headers
@@ -746,6 +752,7 @@ class BookCoverProcessor {
 			return false;
 		}
 
+		// The flags say the size is still valid; the registry holds the file.
 		$hasCachedImage = false;
 		if ($this->bookCoverInfo->getNumResults() == 1) {
 			if ($this->size == 'small' && $this->bookCoverInfo->isThumbnailLoaded()) {
@@ -758,23 +765,20 @@ class BookCoverProcessor {
 		}
 
 		if ($hasCachedImage) {
-			$this->bookCoverInfo->setLastUsed(time());
-			$this->bookCoverInfo->update();
-
-
 			if ($this->bookCoverInfo->getImageSource() == 'default') {
-				global $library;
-				$fileName = $this->bookCoverPath . '/' . $this->size . '/' . $library->subdomain . '_' . $this->cacheName . '.png';
+				$storedCover = $this->bookCoverInfo->getStoredDefaultCover($this->size, $this->getDefaultCoverFingerprint());
 			} else {
-				$fileName = "$this->bookCoverPath/$this->size/$this->cacheName.png";
+				$storedCover = $this->bookCoverInfo->getStoredCover($this->size);
+				if ($storedCover != null && $storedCover->fingerprint !== $this->getCoverFingerprint()) {
+					// Built for other event dates, so it has to be generated again.
+					$storedCover = null;
+				}
 			}
-
-			if (file_exists($fileName)) {
-				$this->log("Checking $fileName", Logger::LOG_NOTICE);
-				// Load local cache if available
+			if ($storedCover != null && $this->returnStoredImage($storedCover)) {
+				$this->bookCoverInfo->setLastUsed(time());
+				$this->bookCoverInfo->update();
 				$this->logTime("Found cached cover");
-				$this->log("$fileName exists, returning", Logger::LOG_NOTICE);
-				$this->returnImage($fileName);
+				$this->log("Returned stored cover $storedCover->storageKey", Logger::LOG_NOTICE);
 			} else {
 				$hasCachedImage = false;
 			}
@@ -782,6 +786,53 @@ class BookCoverProcessor {
 
 		$this->logTime("Finished checking for cached cover.");
 		return $hasCachedImage;
+	}
+
+	/**
+	 * What a cached cover was built from besides the record: the event dates of event covers.
+	 */
+	private function getCoverFingerprint() : string {
+		if (str_contains($this->cacheName, '~')) {
+			return substr($this->cacheName, strrpos($this->cacheName, '~') + 1);
+		}
+		return '';
+	}
+
+	/**
+	 * Generated covers depend on the look of the library's themes, so they are stored per look and
+	 * shared by libraries that look alike.
+	 */
+	private function getDefaultCoverFingerprint() : string {
+		if ($this->defaultCoverFingerprint === null) {
+			$this->defaultCoverFingerprint = $this->getDefaultCoverBuilder()->getFingerprint();
+		}
+		return $this->defaultCoverFingerprint;
+	}
+
+	/**
+	 * Sends a stored cover. A file that cannot be read was removed outside the registry, so its row
+	 * is released and false is returned for the cover to be generated again.
+	 */
+	private function returnStoredImage(StorageObject $storedCover) : bool {
+		$stream = $storedCover->readStream();
+		if ($stream === false) {
+			$this->log("Stored cover $storedCover->storageKey could not be read, generating it again", Logger::LOG_WARNING);
+			$storedCover->releaseThis();
+			return false;
+		}
+		header('Content-type: image/png');
+		//Remove all cookies
+		header_remove("Set-Cookie");
+		$lastModified = gmdate('D, d M Y H:i:s', (int)$storedCover->dateCreated) . ' GMT';
+		if ($this->addModificationHeadersFor($lastModified)) {
+			$this->addCachingHeader();
+			ob_clean();
+			flush();
+			fpassthru($stream);
+			$this->logTime("echo stored cover $storedCover->storageKey");
+		}
+		fclose($stream);
+		return true;
 	}
 
 	/**
@@ -827,11 +878,15 @@ class BookCoverProcessor {
 		$titleResolved = strlen($title) > 0;
 
 		$coverBuilder = $this->getDefaultCoverBuilder();
+		// Drawing sets per-title colors on the builder, so take the fingerprint first.
+		$this->defaultCoverFingerprint ??= $coverBuilder->getFingerprint();
 		if (!$titleResolved) {
 			$title = 'Unknown Title';
 		}
-		$coverBuilder->getCover($title, $author, $this->defaultCoverCacheFile);
-		$result = $this->processImageURL('default', $this->defaultCoverCacheFile, false);
+		$coverBuilder->getCover($title, $author, $this->cacheFile);
+		$this->doNotStore = !$titleResolved;
+		$result = $this->processImageURL('default', $this->cacheFile, false);
+		$this->doNotStore = false;
 
 		if (!$titleResolved && $result) {
 			match($this->size) {
@@ -870,15 +925,9 @@ class BookCoverProcessor {
 		ExternalRequestLogEntry::logRequest("$source.getCover", 'GET', $url, [], '', 0, '', []);
 		if ($image = @file_get_contents($url, false, $context)) {
 			// Figure out file paths -- $tempFile will be used to store the downloaded
-			// image for analysis.  $finalFile will be used for long-term storage if
-			// $cache is true or for temporary display purposes if $cache is false.
-			if ($source == 'default') {
-				$tempFile = str_replace('.png', uniqid(), $this->defaultCoverCacheFile);
-				$finalFile = $this->defaultCoverCacheFile;
-			} else {
-				$tempFile = str_replace('.png', uniqid(), $this->cacheFile);
-				$finalFile = $this->cacheFile;
-			}
+			// image for analysis.  $finalFile holds the resized image until it is stored in the registry.
+			$tempFile = str_replace('.png', uniqid(), $this->cacheFile);
+			$finalFile = $this->cacheFile;
 
 			//Make sure we don't get an image not found cover
 			$imageChecksum = md5($image);
@@ -1018,12 +1067,23 @@ class BookCoverProcessor {
 				}
 			}
 
+			// The record row must exist before the cover can be stored under it.
+			$this->setBookCoverInfo($source, $width, $height);
+			if (!$this->doNotStore) {
+				if ($source == 'default') {
+					$storedCover = $this->bookCoverInfo->storeDefaultCover($finalFile, $this->size, $this->getDefaultCoverFingerprint());
+				} else {
+					$storedCover = $this->bookCoverInfo->storeCover($finalFile, $this->size, $this->getCoverFingerprint());
+				}
+				if ($storedCover == null) {
+					$this->log("Could not store the cover for $this->cacheName", Logger::LOG_ERROR);
+				}
+			}
+
 			// Display the image:
 			$this->returnImage($finalFile);
 
 			$this->logTime("Finished processing image url");
-
-			$this->setBookCoverInfo($source, $width, $height);
 			return true;
 		} else {
 			$this->log("Could not load the file as an image $url", Logger::LOG_NOTICE);
@@ -2135,30 +2195,74 @@ class BookCoverProcessor {
 		}
 
 		if ($okToLoad) {
-			$uploadedImage = $this->bookCoverPath . '/original/' . $permanentId . '.png';
-			if (file_exists($uploadedImage)) {
+			$uploadedImage = $this->getUploadedCoverPath('grouped_work', $permanentId);
+			if ($uploadedImage == null && strlen($permanentId) == 40) {
+				$uploadedImage = $this->getUploadedCoverPath('grouped_work', substr($permanentId, 0, 36));
+			}
+			if ($uploadedImage != null) {
 				return $this->processImageURL('upload', $uploadedImage);
-			} elseif (strlen($permanentId) == 40) {
-				$permanentId = substr($permanentId, 0, 36);
-				$uploadedImage = $this->bookCoverPath . '/original/' . $permanentId . '.png';
-				if (file_exists($uploadedImage)) {
-					return $this->processImageURL('upload', $uploadedImage);
-				}
 			}
 		}
 		return false;
 	}
 
+	/**
+	 * Local copy of the uploaded cover of a record, from the storage registry.
+	 */
+	private function getUploadedCoverPath(string $recordType, string $recordId) : ?string {
+		return $this->getStoredCoverPath($recordType, $recordId, '');
+	}
+
+	/**
+	 * Local copy of a cached size of another record, e.g. the record a grouped work references.
+	 */
+	private function getCachedCoverPath(string $recordType, string $recordId, string $size) : ?string {
+		return $this->getStoredCoverPath($recordType, $recordId, $size);
+	}
+
+	private function getStoredCoverPath(string $recordType, string $recordId, string $variant) : ?string {
+		$bookCoverInfo = new BookCoverInfo();
+		$bookCoverInfo->setRecordType($recordType);
+		$bookCoverInfo->setRecordId($recordId);
+		if (!$bookCoverInfo->find(true)) {
+			return null;
+		}
+		$storedCover = $bookCoverInfo->getStoredCover($variant);
+		return $storedCover == null ? null : $this->copyToWorkFile($storedCover);
+	}
+
+	/**
+	 * processImageURL() reads its source by path, so the stored bytes go to a work file first.
+	 */
+	private function copyToWorkFile(StorageObject $storedCover) : ?string {
+		$contents = $storedCover->read();
+		if ($contents === false) {
+			$this->log("Stored cover $storedCover->storageKey could not be read", Logger::LOG_WARNING);
+			return null;
+		}
+		$workFile = sys_get_temp_dir() . '/aspen_cover_source_' . bin2hex(random_bytes(8));
+		file_put_contents($workFile, $contents);
+		$this->deleteAtShutdown($workFile);
+		return $workFile;
+	}
+
+	private function deleteAtShutdown(string $workFile) : void {
+		register_shutdown_function(function () use ($workFile) {
+			@unlink($workFile);
+		});
+	}
+
 	private function getUploadedRecordCover($id) : bool {
+		$recordType = $this->type;
 		if (str_contains($id, ':')) {
 			[
-				,
+				$recordType,
 				$id,
 			] = explode(':', $id);
 		}
 		if ($this->bookCoverInfo->getRecordType() != 'series' && $this->bookCoverInfo->getRecordType() != 'seriesMember' && $this->bookCoverInfo->getRecordType() != 'list') {
-			$uploadedImage = $this->bookCoverPath . '/original/' . $id . '.png';
-			if (file_exists($uploadedImage)) {
+			$uploadedImage = $this->getUploadedCoverPath($recordType, $id);
+			if ($uploadedImage != null) {
 				return $this->processImageURL('upload', $uploadedImage);
 			}
 		}
@@ -2175,9 +2279,16 @@ class BookCoverProcessor {
 			require_once ROOT_DIR . '/RecordDrivers/RecordDriverFactory.php';
 			$recordDriver = RecordDriverFactory::initRecordDriverById($referenceId);
 			if ($recordDriver && $recordDriver->isValid()) {
-				$referencedCover = str_replace(':', '_', $referenceId);
-				$referencedCoverURL_lg = $this->bookCoverPath . '/large/' . $referencedCover . '.png';
-				$referencedCoverURL_md = $this->bookCoverPath . '/medium/' . $referencedCover . '.png';
+				$referenceRecordType = 'grouped_work';
+				$referenceRecordId = $referenceId;
+				if (str_contains($referenceId, ':')) {
+					[
+						$referenceRecordType,
+						$referenceRecordId,
+					] = explode(':', $referenceId, 2);
+				}
+				$referencedCoverURL_lg = $this->getCachedCoverPath($referenceRecordType, $referenceRecordId, 'large');
+				$referencedCoverURL_md = $this->getCachedCoverPath($referenceRecordType, $referenceRecordId, 'medium');
 
 				if (SystemVariables::getSystemVariables()->useOriginalCoverUrls) {
 					// When original cover URLs are used, rely on the referenced record's stored URL instead of files.
@@ -2197,9 +2308,9 @@ class BookCoverProcessor {
 						if ($referencedCoverInfo->find(true)) {
 							if ($referencedCoverInfo->getImageSource() === 'upload') {
 								// If there's an uploaded cover, check disk instead of using original URL
-								if (file_exists($referencedCoverURL_lg)) {
+								if ($referencedCoverURL_lg != null) {
 									return $this->processImageURL('reference ' . $referenceId, $referencedCoverURL_lg);
-								} elseif (file_exists($referencedCoverURL_md)) {
+								} elseif ($referencedCoverURL_md != null) {
 									return $this->processImageURL('reference ' . $referenceId, $referencedCoverURL_md);
 								}
 								return false;
@@ -2220,9 +2331,9 @@ class BookCoverProcessor {
 						}
 					}
 					return false;
-				} elseif (file_exists($referencedCoverURL_lg)) {
+				} elseif ($referencedCoverURL_lg != null) {
 					return $this->processImageURL('reference ' . $referenceId, $referencedCoverURL_lg);
-				} elseif (file_exists($referencedCoverURL_md)) {
+				} elseif ($referencedCoverURL_md != null) {
 					return $this->processImageURL('reference ' . $referenceId, $referencedCoverURL_md);
 				} else {
 					return false;

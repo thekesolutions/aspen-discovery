@@ -1386,19 +1386,16 @@ class GroupedWork_AJAX extends JSON_Action {
 					$id = $recordId;
 				}
 
-				global $configArray;
-				$destFullPath = $configArray['Site']['coverPath'] . '/original/' . $id . '.png';
 				require_once ROOT_DIR . '/sys/Covers/CoverImageUtils.php';
 
 				/** @noinspection SpellCheckingInspection */
 				if ($uploadOption == 'andgrouped') { //update image for grouped work and individual bib record
-					$res = formatImageUpload($uploadedFile, $destFullPath, $id, $recordType);
+					$res = formatImageUpload($uploadedFile, $id, $recordType);
 					/** @noinspection PhpIfWithCommonPartsInspection */
 					if ($res) {
 						$id = $_REQUEST['id'];
 						$recordType = 'grouped_work';
-						$destFullPath = $configArray['Site']['coverPath'] . '/original/' . $id . '.png';
-						$res = formatImageUpload($uploadedFile, $destFullPath, $id, $recordType);
+						$res = formatImageUpload($uploadedFile, $id, $recordType);
 						$result = $res;
 					}else{
 						$result = $res;
@@ -1409,7 +1406,7 @@ class GroupedWork_AJAX extends JSON_Action {
 					]);
 				} /** @noinspection SpellCheckingInspection */
 				elseif ($uploadOption == 'alldefault') {//update image for all records in grouped work with default covers
-					$res = formatImageUpload($uploadedFile, $destFullPath, $id, $recordType);
+					$res = formatImageUpload($uploadedFile, $id, $recordType);
 					if ($res) {
 						require_once ROOT_DIR . '/RecordDrivers/GroupedWorkDriver.php';
 						require_once ROOT_DIR . '/sys/Covers/BookCoverInfo.php';
@@ -1425,8 +1422,7 @@ class GroupedWork_AJAX extends JSON_Action {
 							if ($hasDefaultCover->find(true)){
 								$id = substr(strstr($record->id, ':'), 1);
 								$recordType = $record->source;
-								$destFullPath = $configArray['Site']['coverPath'] . '/original/' . $id . '.png';
-								$res = formatImageUpload($uploadedFile, $destFullPath, $id, $recordType);
+								$res = formatImageUpload($uploadedFile, $id, $recordType);
 								if ($res){
 									continue;
 								}else{
@@ -1448,15 +1444,14 @@ class GroupedWork_AJAX extends JSON_Action {
 					}
 				}else{ //only updating grouped work or individual bib cover
 					if($recordType == 'grouped_work') {
-						if (formatImageUpload($uploadedFile, $destFullPath, $id, $recordType)) {
+						if (formatImageUpload($uploadedFile, $id, $recordType)) {
 							require_once ROOT_DIR . '/RecordDrivers/GroupedWorkDriver.php';
 							$recordDriver = new GroupedWorkDriver($id);
 							$relatedRecords = $recordDriver->getRelatedRecords(true);
 							if (sizeof($relatedRecords) == 1) {
 								$id = substr(strstr($relatedRecords[0]->id, ':'), 1);
 								$recordType = $relatedRecords[0]->source;
-								$destFullPath = $configArray['Site']['coverPath'] . '/original/' . $id . '.png';
-								$result = formatImageUpload($uploadedFile, $destFullPath, $id, $recordType);
+								$result = formatImageUpload($uploadedFile, $id, $recordType);
 								if ($result['success'] = true){
 									$result['message'] = translate([
 										'text' => 'Your cover has been uploaded successfully',
@@ -1472,7 +1467,7 @@ class GroupedWork_AJAX extends JSON_Action {
 							}
 						}
 					} else {
-						$result = formatImageUpload($uploadedFile, $destFullPath, $id, $recordType);
+						$result = formatImageUpload($uploadedFile, $id, $recordType);
 						if ($result['success'] = true){
 							$result['message'] = translate([
 								'text' => 'Your cover has been uploaded successfully',
@@ -1574,18 +1569,16 @@ class GroupedWork_AJAX extends JSON_Action {
 				if($recordType !== 'grouped_work') {
 					$id = $recordId;
 				}
-				global $configArray;
-				$destFullPath = $configArray['Site']['coverPath'] . '/original/' . $id . '.png';
+				require_once ROOT_DIR . '/sys/Covers/CoverImageUtils.php';
 				$ext = pathinfo($filename, PATHINFO_EXTENSION);
 				if ($ext == "jpg" or $ext == "png" or $ext == "gif" or $ext == "jpeg") {
-					$upload = file_put_contents($destFullPath, $uploadedFile);
+					$upload = storeUploadedCoverContents($uploadedFile, $id, $recordType);
 					/** @noinspection SpellCheckingInspection */
 					if ($uploadOption == 'andgrouped') { //update image for grouped work and individual bib record
 						if ($upload) {
 							$id = $_REQUEST['id'];
 							$recordType = 'grouped_work';
-							$destFullPath = $configArray['Site']['coverPath'] . '/original/' . $id . '.png';
-							$upload = file_put_contents($destFullPath, $uploadedFile);
+							$upload = storeUploadedCoverContents($uploadedFile, $id, $recordType);
 							if ($upload){
 								require_once ROOT_DIR . '/sys/Covers/BookCoverInfo.php';
 								$bookCoverInfo = new BookCoverInfo();
@@ -1629,8 +1622,7 @@ class GroupedWork_AJAX extends JSON_Action {
 								if ($hasDefaultCover->find(true)){
 									$id = substr(strstr($record->id, ':'), 1);
 									$recordType = $record->source;
-									$destFullPath = $configArray['Site']['coverPath'] . '/original/' . $id . '.png';
-									$upload = file_put_contents($destFullPath, $uploadedFile);
+									$upload = storeUploadedCoverContents($uploadedFile, $id, $recordType);
 									if ($upload){
 										require_once ROOT_DIR . '/sys/Covers/BookCoverInfo.php';
 										$bookCoverInfo = new BookCoverInfo();
@@ -1668,8 +1660,7 @@ class GroupedWork_AJAX extends JSON_Action {
 								if (sizeof($relatedRecords) == 1){
 									$id = substr(strstr($relatedRecords[0]->id, ':'), 1);
 									$recordType = $relatedRecords[0]->source;
-									$destFullPath = $configArray['Site']['coverPath'] . '/original/' . $id . '.png';
-									$upload = file_put_contents($destFullPath, $uploadedFile);
+									$upload = storeUploadedCoverContents($uploadedFile, $id, $recordType);
 									if ($upload){
 										$result['success'] = true;
 
@@ -2968,29 +2959,7 @@ class GroupedWork_AJAX extends JSON_Action {
 		}
 		$bookcoverInfo->__set('recordId', $id);
 		if ($bookcoverInfo->find(true)) {
-			global $configArray;
-			$bookCoverPath = $configArray['Site']['coverPath'];
-			$permanentId = $bookcoverInfo->getRecordId();
-
-			$originalUploadedImage = $bookCoverPath . '/original/' . $permanentId . '.png';
-			if (file_exists($originalUploadedImage)) {
-				unlink($originalUploadedImage);
-			}
-
-			$smallUploadedImage = $bookCoverPath . '/small/' . $permanentId . '.png';
-			if (file_exists($smallUploadedImage)) {
-				unlink($smallUploadedImage);
-			}
-
-			$mediumUploadedImage = $bookCoverPath . '/medium/' . $permanentId . '.png';
-			if (file_exists($mediumUploadedImage)) {
-				unlink($mediumUploadedImage);
-			}
-
-			$largeUploadedImage = $bookCoverPath . '/large/' . $permanentId . '.png';
-			if (file_exists($largeUploadedImage)) {
-				unlink($largeUploadedImage);
-			}
+			$bookcoverInfo->releaseAllCovers();
 
 			$bookcoverInfo->setImageSource('');
 			require_once ROOT_DIR . '/sys/SystemVariables.php';

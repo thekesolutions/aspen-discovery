@@ -146,11 +146,15 @@ function _clip($value, $lower, $upper) {
 	}
 }
 
-function formatImageUpload($uploadedFile, $destFullPath, $id, $recordType){
+/**
+ * Converts an uploaded cover to PNG and stores it in the storage registry as the record's uploaded cover.
+ */
+function formatImageUpload($uploadedFile, $id, $recordType){
 	$result = ['success' => false];
 	$fileType = $uploadedFile["type"];
+	$pngFile = tempnam(sys_get_temp_dir(), 'aspen_cover_upload_');
 	if ($fileType == 'image/png') {
-		if (copy($uploadedFile["tmp_name"], $destFullPath)) {
+		if (copy($uploadedFile["tmp_name"], $pngFile)) {
 			$result['success'] = true;
 		}
 	} elseif ($fileType == 'image/gif') {
@@ -160,7 +164,7 @@ function formatImageUpload($uploadedFile, $destFullPath, $id, $recordType){
 				'text' => 'Unable to process this image, please try processing in an image editor and reloading',
 				'isAdminFacing' => true,
 			]);
-		} elseif (@imagepng($imageResource, $destFullPath, 9)) {
+		} elseif (@imagepng($imageResource, $pngFile, 9)) {
 			$result['success'] = true;
 		}
 	} elseif ($fileType == 'image/jpg' || $fileType == 'image/jpeg') {
@@ -170,7 +174,7 @@ function formatImageUpload($uploadedFile, $destFullPath, $id, $recordType){
 				'text' => 'Unable to process this image, please try processing in an image editor and reloading',
 				'isAdminFacing' => true,
 			]);
-		} elseif (@imagepng($imageResource, $destFullPath, 9)) {
+		} elseif (@imagepng($imageResource, $pngFile, 9)) {
 			$result['success'] = true;
 		}
 	} else {
@@ -182,30 +186,37 @@ function formatImageUpload($uploadedFile, $destFullPath, $id, $recordType){
 
 	if ($result['success'] == true) {
 		require_once ROOT_DIR . '/sys/Covers/BookCoverInfo.php';
-		$bookCoverInfo = new BookCoverInfo();
-		$bookCoverInfo->recordType = $recordType;
-		$bookCoverInfo->recordId = $id;
-		if($bookCoverInfo->find(true)) {
-			$bookCoverInfo->imageSource = "upload";
-			$bookCoverInfo->thumbnailLoaded = 0;
-			$bookCoverInfo->mediumLoaded = 0;
-			$bookCoverInfo->largeLoaded = 0;
-			if($bookCoverInfo->update()) {
-				$result['message'] = translate([
-					'text' => 'Your cover has been uploaded successfully',
-					'isAdminFacing' => true,
-				]);
-			}
-		}
-		try {
-			chgrp($destFullPath, 'aspen_apache');
-			chmod($destFullPath, 0775);
-		} catch (Exception $e) {
-			//Just ignore errors
+		$bookCoverInfo = BookCoverInfo::findOrCreate($recordType, $id);
+		if ($bookCoverInfo->storeUploadedCover($pngFile) != null) {
+			$result['message'] = translate([
+				'text' => 'Your cover has been uploaded successfully',
+				'isAdminFacing' => true,
+			]);
+		} else {
+			$result['success'] = false;
+			$result['message'] = translate([
+				'text' => 'Unable to save the cover, please try again',
+				'isAdminFacing' => true,
+			]);
 		}
 	}
+	@unlink($pngFile);
 
 	return $result;
+}
+
+/**
+ * Stores the contents of a cover image (e.g. downloaded from a URL) as the record's uploaded cover.
+ */
+function storeUploadedCoverContents(string $contents, $id, $recordType): bool {
+	require_once ROOT_DIR . '/sys/Covers/BookCoverInfo.php';
+	$coverFile = tempnam(sys_get_temp_dir(), 'aspen_cover_upload_');
+	$stored = false;
+	if (file_put_contents($coverFile, $contents) !== false) {
+		$stored = BookCoverInfo::findOrCreate($recordType, $id)->storeUploadedCover($coverFile) != null;
+	}
+	@unlink($coverFile);
+	return $stored;
 }
 
 function resizeImage($originalPath, $newPath, $maxWidth, $maxHeight) {

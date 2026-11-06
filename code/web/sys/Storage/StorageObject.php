@@ -32,6 +32,7 @@ class StorageObject extends DataObject {
 	// Tables that own registry files and their primary key, used to find files whose owner is gone.
 	const OWNER_TABLES = [
 		'themes' => 'id',
+		'bookcover_info' => 'id',
 	];
 
 	private const MIME_EXTENSIONS = [
