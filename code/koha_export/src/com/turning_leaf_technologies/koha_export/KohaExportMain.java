@@ -8,6 +8,7 @@ import com.turning_leaf_technologies.indexing.IlsExtractLogEntry;
 import com.turning_leaf_technologies.indexing.IndexingProfile;
 import com.turning_leaf_technologies.indexing.IndexingUtils;
 import com.turning_leaf_technologies.logging.LoggingUtil;
+import com.turning_leaf_technologies.storage.StorageClient;
 import com.turning_leaf_technologies.marc.MarcUtil;
 import org.aspen_discovery.reindexer.GroupedWorkIndexer;
 import com.turning_leaf_technologies.strings.AspenStringUtils;
@@ -22,13 +23,6 @@ import org.marc4j.marc.Record;
 import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.attribute.GroupPrincipal;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.UserPrincipalLookupService;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -380,23 +374,31 @@ public class KohaExportMain {
 			float kohaVersion = getKohaVersion(kohaConn);
 			if (kohaVersion >= 20.11) {
 				//noinspection SpellCheckingInspection
-				getKohaCoversStmt = kohaConn.prepareStatement("SELECT timestamp, imagenumber, biblionumber from cover_images", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+				getKohaCoversStmt = kohaConn.prepareStatement("SELECT UNIX_TIMESTAMP(timestamp) as coverTimestamp, imagenumber, biblionumber from cover_images", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 				//noinspection SpellCheckingInspection
 				getKohaCoverStmt = kohaConn.prepareStatement("SELECT imagefile, mimetype from cover_images  where imagenumber = ?", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 			}else{
 				//noinspection SpellCheckingInspection
-				getKohaCoversStmt = kohaConn.prepareStatement("SELECT timestamp, imagenumber, biblionumber from biblioimages", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+				getKohaCoversStmt = kohaConn.prepareStatement("SELECT UNIX_TIMESTAMP(timestamp) as coverTimestamp, imagenumber, biblionumber from biblioimages", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 				//noinspection SpellCheckingInspection
 				getKohaCoverStmt = kohaConn.prepareStatement("SELECT imagefile, mimetype from biblioimages  where imagenumber = ?", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 			}
 			PreparedStatement getGroupedWorkForRecordStmt = dbConn.prepareStatement("SELECT permanent_id from grouped_work inner join grouped_work_primary_identifiers on grouped_work.id = grouped_work_id where type = ? and identifier = ?", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-			PreparedStatement clearBookCoverInfoStmt = dbConn.prepareStatement("UPDATE bookcover_info set imageSource = '', thumbnailLoaded=0, mediumLoaded=0, largeLoaded= 0 where recordType = 'grouped_work' and recordId = ?");
-			long now = new Date().getTime() / 1000;
-			PreparedStatement updateILSBookCoverInfoStmt = dbConn.prepareStatement("INSERT INTO bookcover_info set imageSource = 'upload', thumbnailLoaded=0, mediumLoaded=0, largeLoaded= 0, firstLoaded = " + now + ", lastUsed = 0, recordType = '" + indexingProfile.getName() + "', recordId = ? ON DUPLICATE KEY UPDATE imageSource = 'upload', thumbnailLoaded=0, mediumLoaded=0, largeLoaded= 0");
 
-			String coversPath = configIni.get("Site","coverPath") + "/original/";
+			// Covers are stored through Aspen's storage API. A cover that fails to store has no
+			// registry entry, so it is still pending and is sent again on the next run.
+			StorageClient storageClient = new StorageClient(configIni, serverName, dbConn, logger);
+			Map<String, Long> storedCovers = storageClient.listCoverOriginals(indexingProfile.getName());
+			if (storedCovers == null) {
+				logEntry.incErrors("Could not export book covers, the storage API is not available: " + storageClient.getStopReason());
+				return;
+			}
 			ResultSet kohaCoversRS = getKohaCoversStmt.executeQuery();
 			while (kohaCoversRS.next()){
+				if (!storageClient.isAvailable()) {
+					logEntry.incErrors("Stopped exporting book covers, the remaining covers will be exported on the next run: " + storageClient.getStopReason());
+					break;
+				}
 				String biblioNumber = kohaCoversRS.getString("biblionumber");
 				getGroupedWorkForRecordStmt.setString(1, indexingProfile.getName());
 				getGroupedWorkForRecordStmt.setString(2, biblioNumber);
@@ -404,66 +406,23 @@ public class KohaExportMain {
 				if (getGroupedWorkForRecordRS.next()){
 					//Check to see if we have an existing uploaded record
 					String groupedWorkId = getGroupedWorkForRecordRS.getString("permanent_id");
-					File coverFile = new File(coversPath + biblioNumber + ".png");
-					Timestamp kohaCoverTimestamp = null;
-					try{
-						kohaCoverTimestamp = kohaCoversRS.getTimestamp("timestamp");
-					}catch (SQLException e){
-						logger.warn("Null timestamp found while exporting book covers, ignoring.");
-					}
-					if (!coverFile.exists() || coverFile.length() == 0 || kohaCoverTimestamp == null || (coverFile.lastModified() < kohaCoverTimestamp.getTime())) {
+					// Seconds since epoch, computed by Koha's database, so no time zone conversion applies
+					long kohaCoverTimestamp = kohaCoversRS.getLong("coverTimestamp");
+					boolean hasKohaCoverTimestamp = !kohaCoversRS.wasNull();
+					Long storedAt = storedCovers.get(biblioNumber);
+					if (storedAt == null || (hasKohaCoverTimestamp && storedAt < kohaCoverTimestamp)) {
 						//noinspection SpellCheckingInspection
 						getKohaCoverStmt.setLong(1, kohaCoversRS.getLong("imagenumber"));
 						ResultSet kohaCoverRS = getKohaCoverStmt.executeQuery();
 						if (kohaCoverRS.next()){
-							try {
-								FileOutputStream writer = new FileOutputStream(coverFile);
-								//noinspection SpellCheckingInspection
-								Blob kohaCover = kohaCoverRS.getBlob("imagefile");
-								long curPos = 1;
-								int bufferSize = 1024;
-								long bytesWritten = 0;
-								boolean moreToWrite = true;
-								while (moreToWrite){
-									if (kohaCover.length() - bytesWritten <= bufferSize){
-										bufferSize = (int)(kohaCover.length() - bytesWritten);
-										moreToWrite = false;
-									}
-									writer.write(kohaCover.getBytes(curPos, bufferSize));
-									bytesWritten += bufferSize;
-									curPos += bufferSize;
-								}
-
-								writer.close();
-								clearBookCoverInfoStmt.setString(1, groupedWorkId);
-								int numUpdates = clearBookCoverInfoStmt.executeUpdate();
-								if (numUpdates > 0){
-									logger.debug("Cleared cover cache info for " + groupedWorkId);
-								}
-								updateILSBookCoverInfoStmt.setString(1, biblioNumber);
-								updateILSBookCoverInfoStmt.executeUpdate();
-
-								try {
-									Set<PosixFilePermission> perms = new HashSet<>();
-									perms.add(PosixFilePermission.OWNER_READ);
-									perms.add(PosixFilePermission.OWNER_WRITE);
-									perms.add(PosixFilePermission.GROUP_READ);
-									perms.add(PosixFilePermission.GROUP_WRITE);
-									perms.add(PosixFilePermission.OTHERS_READ);
-
-									Files.setPosixFilePermissions(coverFile.toPath(), perms);
-									String groupName = "aspen_apache";
-									UserPrincipalLookupService lookupService = FileSystems.getDefault().getUserPrincipalLookupService();
-									GroupPrincipal group = lookupService.lookupPrincipalByGroupName(groupName);
-									Files.getFileAttributeView(coverFile.toPath(), PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).setGroup(group);
-								}catch (Exception e){
-									//Errors get generated on Windows, just ignore.
-									logger.error("Error setting file permissions for " + coverFile, e);
-								}
-
+							//noinspection SpellCheckingInspection
+							Blob kohaCover = kohaCoverRS.getBlob("imagefile");
+							byte[] coverImage = kohaCover.getBytes(1, (int)kohaCover.length());
+							StorageClient.StorageResponse response = storageClient.storeCoverOriginal(indexingProfile.getName(), biblioNumber, groupedWorkId, coverImage);
+							if (response.success) {
 								numCoversExported++;
-							}catch (IOException e){
-								logEntry.incErrors("Error creating book cover for " + kohaCoversRS.getString("biblionumber"), e);
+							} else {
+								logEntry.incErrors("Error storing book cover for " + biblioNumber + ": " + response.message);
 							}
 						}
 					}
