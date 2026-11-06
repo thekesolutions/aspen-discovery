@@ -379,6 +379,10 @@ class DataObjectUtil {
 			//Make sure that the type is correct (jpg, png, or gif)
 			if (isset($_REQUEST["remove$propertyName"])) {
 				$object->setProperty($propertyName, '', $property);
+				if (self::usesStorageRegistry($property) && !empty($object->getPrimaryKeyValue())) {
+					require_once ROOT_DIR . '/sys/Storage/StorageObject.php';
+					StorageObject::release($object->__table, (int)$object->getPrimaryKeyValue(), [$propertyName]);
+				}
 
 			} elseif (isset($_FILES[$propertyName])) {
 				$fileForProperty = $_FILES[$propertyName];
@@ -929,6 +933,8 @@ class DataObjectUtil {
 				'isAdminFacing' => true
 			]));
 			return false;
+		} elseif (self::usesStorageRegistry($propertyDefinition)) {
+			return self::storeUploadedImageInRegistry($object, $propertyName, $propertyDefinition, $fileForProperty);
 		} else {
 			$logger->log("Processing uploaded file for $propertyName", Logger::LOG_DEBUG);
 			//Copy the full image to the files directory
@@ -1094,5 +1100,85 @@ class DataObjectUtil {
 				return false;
 			}
 		}
+	}
+
+	public static function usesStorageRegistry(array $propertyDefinition): bool {
+		return ($propertyDefinition['storage'] ?? '') == 'registry';
+	}
+
+	/**
+	 * Stores an uploaded image in the storage registry, owned by the object. The image and each
+	 * derivative (thumbnail, medium) fill their own slot, replacing what the slot held before. The
+	 * legacy filename column is emptied, since the registry row is what says the property has a file.
+	 */
+	private static function storeUploadedImageInRegistry(DataObject $object, string $propertyName, array $propertyDefinition, mixed $fileForProperty): bool {
+		global $logger;
+		if (empty($object->getPrimaryKeyValue())) {
+			// New objects have no id to own the file yet; ObjectEditor processes images again after the insert.
+			return false;
+		}
+		require_once ROOT_DIR . '/sys/Storage/StorageObject.php';
+		require_once ROOT_DIR . '/sys/Covers/CoverImageUtils.php';
+		$ownerTable = $object->__table;
+		$ownerId = (int)$object->getPrimaryKeyValue();
+		$uploadTmp = $fileForProperty['tmp_name'];
+		$originalName = $fileForProperty['name'] ?? '';
+
+		$imageTmp = $uploadTmp;
+		if (isset($propertyDefinition['maxWidth'])) {
+			$maxHeight = $propertyDefinition['maxHeight'] ?? $propertyDefinition['maxWidth'];
+			$resizedTmp = tempnam(sys_get_temp_dir(), 'aspen_img_');
+			if (resizeImage($uploadTmp, $resizedTmp, $propertyDefinition['maxWidth'], $maxHeight)) {
+				$imageTmp = $resizedTmp;
+			}
+		}
+
+		// The MIME type is detected from the stored bytes, since resizing converts images to PNG.
+		$storedImage = StorageObject::store($imageTmp, $ownerTable, $ownerId, $propertyName, '', '', $originalName);
+		if ($storedImage != null) {
+			// Derivatives come from the full upload, before the image is limited to its maximum size.
+			foreach (self::getImageDerivatives($propertyDefinition) as $variant => $width) {
+				if (!self::storeImageDerivative($uploadTmp, $ownerTable, $ownerId, $propertyName, $variant, $width, $originalName)) {
+					// A derivative of the previous image would no longer match the new one
+					StorageObject::getFile($ownerTable, $ownerId, $propertyName, $variant)?->releaseThis();
+				}
+			}
+			$object->setProperty($propertyName, '', $propertyDefinition);
+			$logger->log("Stored $propertyName in the storage registry as $storedImage->storageKey", Logger::LOG_DEBUG);
+		} else {
+			$logger->log("Could not store $propertyName in the storage registry", Logger::LOG_ERROR);
+		}
+
+		if (isset($resizedTmp)) {
+			@unlink($resizedTmp);
+		}
+		return $storedImage != null;
+	}
+
+	/**
+	 * The derivatives an image property keeps besides the image itself, by variant, with their width.
+	 *
+	 * @return int[]
+	 */
+	public static function getImageDerivatives(array $propertyDefinition): array {
+		$derivatives = [];
+		foreach (['thumbnail' => 'thumbWidth', 'medium' => 'mediumWidth'] as $variant => $widthProperty) {
+			if (isset($propertyDefinition[$widthProperty])) {
+				$derivatives[$variant] = (int)$propertyDefinition[$widthProperty];
+			}
+		}
+		return $derivatives;
+	}
+
+	/**
+	 * Resizes the image to the width of the derivative and stores it in the derivative's slot.
+	 */
+	public static function storeImageDerivative(string $sourcePath, string $ownerTable, int $ownerId, string $propertyName, string $variant, int $width, string $originalName): bool {
+		require_once ROOT_DIR . '/sys/Storage/StorageObject.php';
+		require_once ROOT_DIR . '/sys/Covers/CoverImageUtils.php';
+		$derivativeTmp = tempnam(sys_get_temp_dir(), 'aspen_img_');
+		$stored = resizeImage($sourcePath, $derivativeTmp, $width, $width) && StorageObject::store($derivativeTmp, $ownerTable, $ownerId, $propertyName, $variant, '', $originalName) != null;
+		@unlink($derivativeTmp);
+		return $stored;
 	}
 }

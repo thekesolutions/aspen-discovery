@@ -580,7 +580,14 @@
 			{/if}
 
 		{elseif $property.type == 'image' || $property.type == 'file'}
-			{if !empty($propValue) && $property.type == 'image'}
+			{assign var=storedImage value=null}
+			{if $property.type == 'image' && !empty($property.storage) && $property.storage == 'registry' && !empty($object)}
+				{assign var=storedImage value=$object->getStoredFile($propName)}
+				{assign var=storedImageUrl value=$object->getStoredFileUrl($propName, 'thumbnail')}
+				{if !empty($storedImageUrl)}
+					<img src='{$storedImageUrl}' style="display: block; max-width: 100%" alt="Selected Image for {$property.label}">
+				{/if}
+			{elseif !empty($propValue) && $property.type == 'image'}
 				{if !empty($property.thumbWidth)}
 					<img src='/files/thumbnail/{$propValue}' style="display: block" alt="Selected Image for {$property.label}">
 				{else}
@@ -613,10 +620,10 @@
 						{/if}
 					</span>
 				</label>
-				<input type="text" class="form-control" id="importFile-label-{$propName}" readonly value="{$propValue}">
+				<input type="text" class="form-control" id="importFile-label-{$propName}" readonly value="{if !empty($storedImage)}{$storedImage->originalName|escape}{else}{$propValue}{/if}">
 				<input type='hidden' name='{$propName}_existing' id='{$propName}_existing' value='{$propValue|escape}'>
 			</div>
-			{if !empty($propValue)}
+			{if !empty($propValue) || !empty($storedImage)}
 				<div class="checkbox" style="margin-top: 0">
 					<label for="remove{$propName}"><small class="text-danger"><i class="fas fa-trash"></i> {translate text="Remove" isAdminFacing=true}</small>
 						<input type='checkbox' name='remove{$propName}' id='remove{$propName}' {if !empty($property.readOnly)}readonly disabled{/if}>

@@ -1474,6 +1474,41 @@ abstract class DataObject implements JsonSerializable {
 
 	}
 
+	/**
+	 * The registry file stored for an image property, or for one of its variants (thumbnail,
+	 * medium). Falls back to the file itself when the variant was never generated.
+	 */
+	public function getStoredFile(string $propertyName, string $variant = '') : ?StorageObject {
+		if (empty($this->getPrimaryKeyValue())) {
+			return null;
+		}
+		require_once ROOT_DIR . '/sys/Storage/StorageObject.php';
+		$ownerId = (int)$this->getPrimaryKeyValue();
+		return StorageObject::getFile($this->__table, $ownerId, $propertyName, $variant) ?? StorageObject::getFile($this->__table, $ownerId, $propertyName);
+	}
+
+	/**
+	 * URL of an image property, or an empty string when the property has no file.
+	 */
+	public function getStoredFileUrl(string $propertyName, string $variant = '') : string {
+		return $this->getStoredFile($propertyName, $variant)?->getUrl() ?? '';
+	}
+
+	/**
+	 * Contents of an image property, for code that processes the image (e.g. generated covers).
+	 */
+	public function getStoredFileContents(string $propertyName) : string|false {
+		return $this->getStoredFile($propertyName)?->read() ?? false;
+	}
+
+	/**
+	 * Identifies the current file of an image property without reading it, so callers can tell
+	 * when it changes: registry keys are never reused.
+	 */
+	public function getStoredFileFingerprint(string $propertyName) : string {
+		return $this->getStoredFile($propertyName)?->storageKey ?? '';
+	}
+
 	public function getTextBlockTranslation($fieldName, $languageCode, $returnDefault = true) : string {
 		$key = "{$fieldName}_{$languageCode}_$returnDefault";
 		if (!empty($this->_data[$key])){
