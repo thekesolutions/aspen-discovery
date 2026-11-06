@@ -2752,6 +2752,119 @@ class Theme extends DataObject {
 		}
 	}
 
+	/**
+	 * Moves the images of every theme to the storage registry. Files are registered where they are,
+	 * so their URLs do not change. A file used by several themes (themes copied before the registry
+	 * shared filenames) is copied for each extra theme, so each theme can later delete its own. A
+	 * missing thumbnail or medium image is generated again from the image. A property whose image
+	 * file is missing is emptied, since it could not be shown anyway. The property columns are
+	 * emptied once the image is registered: the registry row is what says a theme has an image.
+	 *
+	 * @return array{success: bool, numRegistered: int, notes: string[]}
+	 */
+	public static function migrateImagesToStorage() : array {
+		global $configArray;
+		require_once ROOT_DIR . '/sys/Storage/StorageObject.php';
+		require_once ROOT_DIR . '/sys/DataObjectUtil.php';
+		$filesPath = $configArray['Site']['local'] . '/files';
+		$imageProperties = self::getImageProperties();
+		$result = [
+			'success' => true,
+			'numRegistered' => 0,
+			'notes' => [],
+		];
+
+		$theme = new Theme();
+		$theme->find();
+		$themes = [];
+		while ($theme->fetch()) {
+			$themes[] = clone $theme;
+		}
+
+		$themesWithImages = array_filter($themes, function (Theme $theme) use ($imageProperties) {
+			foreach (array_keys($imageProperties) as $propertyName) {
+				if (!empty($theme->$propertyName)) {
+					return true;
+				}
+			}
+			return false;
+		});
+		if (!empty($themesWithImages) && !self::anyImageFileExists($themesWithImages, $imageProperties, "$filesPath/original")) {
+			// Not one image found means storage is not mounted (Docker creates the folders empty), not that the images are gone.
+			$result['success'] = false;
+			$result['notes'][] = "No theme image found in $filesPath/original, check the data directory. Nothing was changed.";
+			return $result;
+		}
+
+		$themesToRegenerate = [];
+		foreach ($themesWithImages as $theme) {
+			$columnsToEmpty = [];
+			foreach ($imageProperties as $propertyName => $propertyDefinition) {
+				$filename = basename((string)$theme->$propertyName);
+				if ($filename === '') {
+					continue;
+				}
+				$originalPath = "$filesPath/original/$filename";
+				if (!is_readable($originalPath)) {
+					$result['notes'][] = "Theme \"$theme->themeName\": $propertyName file $filename not found, cleared";
+					$columnsToEmpty[] = $propertyName;
+					$themesToRegenerate[$theme->id] = $theme;
+					continue;
+				}
+				if (StorageObject::registerLegacy($originalPath, $theme->__table, (int)$theme->id, $propertyName) == null) {
+					// Kept as it is, so running the update again picks it up.
+					$result['success'] = false;
+					$result['notes'][] = "Theme \"$theme->themeName\": could not register $propertyName file $filename";
+					continue;
+				}
+				$result['numRegistered']++;
+				foreach (DataObjectUtil::getImageDerivatives($propertyDefinition) as $variant => $width) {
+					$derivativePath = "$filesPath/$variant/$filename";
+					if (is_readable($derivativePath)) {
+						$registered = StorageObject::registerLegacy($derivativePath, $theme->__table, (int)$theme->id, $propertyName, $variant) != null;
+					} else {
+						$registered = DataObjectUtil::storeImageDerivative($originalPath, $theme->__table, (int)$theme->id, $propertyName, $variant, $width, $filename);
+					}
+					if (!$registered) {
+						$result['notes'][] = "Theme \"$theme->themeName\": could not register the $variant image of $propertyName, the image is shown instead";
+					}
+				}
+				$columnsToEmpty[] = $propertyName;
+			}
+			if (!empty($columnsToEmpty)) {
+				// A plain update: Theme::update() would regenerate covers and derived themes for each theme.
+				$theme->query('UPDATE themes SET ' . implode(', ', array_map(fn($column) => "$column = ''", $columnsToEmpty)) . ' WHERE id = ' . (int)$theme->id);
+			}
+		}
+
+		global $interface;
+		if (!empty($themesToRegenerate) && !empty($interface)) {
+			foreach ($themesToRegenerate as $theme) {
+				$themeToUpdate = new Theme();
+				$themeToUpdate->id = $theme->id;
+				if ($themeToUpdate->find(true)) {
+					$themeToUpdate->generateCss(true);
+				}
+			}
+		}
+		return $result;
+	}
+
+	/**
+	 * @param Theme[] $themes
+	 */
+	private static function anyImageFileExists(array $themes, array $imageProperties, string $originalPath) : bool {
+		foreach ($themes as $theme) {
+			foreach (array_keys($imageProperties) as $propertyName) {
+				$filename = basename((string)$theme->$propertyName);
+				if ($filename !== '' && is_readable("$originalPath/$filename")) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	/** @noinspection PhpUnused */
 	public function validateColorContrast() : array {
 		global $library;

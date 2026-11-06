@@ -111,6 +111,14 @@ function getUpdates26_11_00(): array {
 				"ALTER TABLE storage_settings ADD COLUMN deleteDelayDays INT NOT NULL DEFAULT 7",
 			],
 		], //storage_settings_delete_delay
+		'storage_migrate_theme_images' => [
+			'title' => 'Move theme images to the storage registry',
+			'description' => 'Registers every theme image where it is, so its URL does not change. Images whose file is missing are cleared and listed.',
+			'continueOnError' => false,
+			'sql' => [
+				'migrateThemeImagesToStorage',
+			],
+		], //storage_migrate_theme_images
 
 		//tomas
 
@@ -120,4 +128,33 @@ function getUpdates26_11_00(): array {
 
 
 	];
+}
+
+/** @noinspection PhpUnused */
+function migrateThemeImagesToStorage(&$update): void {
+	require_once ROOT_DIR . '/sys/Theming/Theme.php';
+	reportStorageMigration($update, Theme::migrateImagesToStorage(), 'Registered %1% theme images in the storage registry');
+}
+
+/**
+ * The status lists every item that was cleared or could not be registered, so the admin can see on
+ * the Database Maintenance page what to upload again. The items are logged too, since updates run
+ * from the command line (upgrade scripts, Docker startup) only report the status of failed updates.
+ */
+function reportStorageMigration(&$update, array $result, string $summary): void {
+	global $logger;
+	foreach ($result['notes'] as $note) {
+		$logger->log("$update[title]: $note", Logger::LOG_WARNING, true);
+	}
+	$update['success'] = $result['success'];
+	$status = translate([
+		'text' => $summary,
+		1 => $result['numRegistered'],
+		'isAdminFacing' => true,
+	]);
+	if (!empty($result['notes'])) {
+		// "Warning" makes the Database Maintenance page highlight the update
+		$status .= '<br>Warning:<br>' . implode('<br>', array_map('htmlspecialchars', $result['notes']));
+	}
+	$update['status'] = $status;
 }
