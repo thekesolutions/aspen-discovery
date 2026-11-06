@@ -119,6 +119,14 @@ function getUpdates26_11_00(): array {
 				'migrateThemeImagesToStorage',
 			],
 		], //storage_migrate_theme_images
+		'storage_migrate_uploaded_covers' => [
+			'title' => 'Move uploaded covers to the storage registry',
+			'description' => 'Registers every uploaded record cover where it is. Records whose uploaded cover is missing go back to their other cover sources and are listed.',
+			'continueOnError' => false,
+			'sql' => [
+				'migrateUploadedCoversToStorage',
+			],
+		], //storage_migrate_uploaded_covers
 
 		//tomas
 
@@ -134,6 +142,12 @@ function getUpdates26_11_00(): array {
 function migrateThemeImagesToStorage(&$update): void {
 	require_once ROOT_DIR . '/sys/Theming/Theme.php';
 	reportStorageMigration($update, Theme::migrateImagesToStorage(), 'Registered %1% theme images in the storage registry');
+}
+
+/** @noinspection PhpUnused */
+function migrateUploadedCoversToStorage(&$update): void {
+	require_once ROOT_DIR . '/sys/Covers/BookCoverInfo.php';
+	reportStorageMigration($update, BookCoverInfo::migrateUploadedCoversToStorage(), 'Registered %1% uploaded covers in the storage registry');
 }
 
 /**
