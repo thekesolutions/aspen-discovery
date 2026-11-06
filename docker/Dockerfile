@@ -68,7 +68,7 @@ RUN for confDir in /etc/php/*/fpm/conf.d; do cp /tmp/99-aspen-uploads.ini "$conf
 	&& rm /tmp/99-aspen-uploads.ini
 
 # Enable required Apache modules
-RUN a2enmod proxy_fcgi setenvif rewrite
+RUN a2enmod proxy_fcgi setenvif rewrite headers
 RUN a2dissite 000-default
 
 # Adding entrypoint and init scripts

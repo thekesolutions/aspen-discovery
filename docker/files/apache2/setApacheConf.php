@@ -57,6 +57,15 @@ try {
 		}
 	}
 
+	// Copy storage-cache.conf, so sites created before the vhost template had it get it too
+	if (file_exists("$dockerDir/files/apache2/storage-cache.conf")) {
+		if (!copy("$dockerDir/files/apache2/storage-cache.conf", "$apacheDir/conf-enabled/storage-cache.conf")) {
+			DockerLogger::warn("Failed to copy storage-cache configuration");
+		} else {
+			DockerLogger::info("Storage cache configuration copied");
+		}
+	}
+
 	// Validate Apache configuration
 	$output = [];
 	$returnCode = 0;
