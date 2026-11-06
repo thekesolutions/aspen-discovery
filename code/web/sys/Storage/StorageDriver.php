@@ -1,6 +1,9 @@
 <?php
 
 interface StorageDriver {
+	// Marks a key that points at a file written before the storage registry existed.
+	const LEGACY_KEY_PREFIX = 'legacy:';
+
 	/**
 	 * Returns a public-facing URL the caller can redirect a browser to, or an
 	 * empty string if this driver cannot serve the key directly and the
