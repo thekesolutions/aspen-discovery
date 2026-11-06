@@ -157,6 +157,11 @@
 #######################################
 59 23 * * * aspen php /usr/local/aspen-discovery/code/web/cron/purgeSoftDeleted.php {sitename}
 
+#####################################
+# Clean up the storage registry     #
+#####################################
+30 2 * * * aspen php /usr/local/aspen-discovery/code/web/cron/cleanupStorage.php {sitename}
+
 #######################################################
 # Update holds and checkouts for Community Engagement #
 #######################################################

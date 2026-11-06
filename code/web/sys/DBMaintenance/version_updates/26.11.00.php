@@ -64,6 +64,54 @@ function getUpdates26_11_00(): array {
 			],
 		], //oauth2_client_rate_limits
 
+		'storage_objects' => [
+			'title' => 'Add storage object registry',
+			'description' => 'One row per stored file. Keys are random and never reused. Each file fills a slot of the object that owns it: the property and its variant (thumbnail, a cover size).',
+			'continueOnError' => false,
+			'sql' => [
+				"CREATE TABLE IF NOT EXISTS storage_objects (
+					id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+					storageSettingId INT NOT NULL,
+					storageKey VARCHAR(500) NOT NULL,
+					originalName VARCHAR(255) NOT NULL DEFAULT '',
+					mimeType VARCHAR(100) NOT NULL DEFAULT '',
+					size BIGINT NOT NULL DEFAULT 0,
+					sha256 CHAR(64) NOT NULL DEFAULT '',
+					ownerTable VARCHAR(64) NOT NULL,
+					ownerId INT NOT NULL,
+					ownerField VARCHAR(100) NOT NULL,
+					variant VARCHAR(20) NOT NULL DEFAULT '',
+					fingerprint VARCHAR(64) NOT NULL DEFAULT '',
+					dateCreated INT NOT NULL,
+					UNIQUE INDEX storageKey (storageSettingId, storageKey(255)),
+					UNIQUE INDEX slot (ownerTable, ownerId, ownerField, variant, fingerprint),
+					INDEX dateCreated (dateCreated)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+			],
+		], //storage_objects
+		'storage_deletions' => [
+			'title' => 'Add storage deletion queue',
+			'description' => 'Files released from the registry are deleted by the nightly cleanup once the delete delay has passed.',
+			'continueOnError' => false,
+			'sql' => [
+				"CREATE TABLE IF NOT EXISTS storage_deletions (
+					id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+					storageSettingId INT NOT NULL,
+					storageKey VARCHAR(500) NOT NULL,
+					dateQueued INT NOT NULL,
+					INDEX dateQueued (dateQueued)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+			],
+		], //storage_deletions
+		'storage_settings_delete_delay' => [
+			'title' => 'Add delete delay to storage settings',
+			'description' => 'Number of days a released file is kept before it is deleted.',
+			'continueOnError' => false,
+			'sql' => [
+				"ALTER TABLE storage_settings ADD COLUMN deleteDelayDays INT NOT NULL DEFAULT 7",
+			],
+		], //storage_settings_delete_delay
+
 		//tomas
 
 		// stephen

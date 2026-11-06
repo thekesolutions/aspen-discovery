@@ -63,6 +63,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 59 23 * * *  sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/purgeSoftDeleted.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
 0 */12 * * * sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/purgeUserAppRequestLogs.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
 0 3 * * *    sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/dismissYearInReviewMessages.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
+30 2 * * *   sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/cleanupStorage.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
 
 #   Talpa
 0 1 * * *    sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/talpaWorksCron.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2

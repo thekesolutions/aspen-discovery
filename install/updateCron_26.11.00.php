@@ -51,6 +51,23 @@ if (count($_SERVER['argv']) > 1) {
 	} else {
 		echo '- Could not find cron settings file.' . PHP_EOL;
 	}
+
+	$cronSettingsFile = "/usr/local/aspen-discovery/sites/$serverName/conf/crontab_settings.txt";
+	$cronSettings = @file_get_contents($cronSettingsFile);
+	if ($cronSettings !== false && !str_contains($cronSettings, 'cleanupStorage.php')) {
+		$storageCleanup = "#####################################\n";
+		$storageCleanup .= "# Clean up the storage registry     #\n";
+		$storageCleanup .= "#####################################\n";
+		$storageCleanup .= "30 2 * * * aspen php /usr/local/aspen-discovery/code/web/cron/cleanupStorage.php $serverName\n\n";
+		// Insert before the Debian end-of-file marker, or at the end when it is missing.
+		$debianMarkerPosition = strpos($cronSettings, '# Debian needs a blank line at the end of cron');
+		if ($debianMarkerPosition !== false) {
+			$cronSettings = substr($cronSettings, 0, $debianMarkerPosition) . $storageCleanup . substr($cronSettings, $debianMarkerPosition);
+		} else {
+			$cronSettings = rtrim($cronSettings, "\n") . "\n\n" . $storageCleanup;
+		}
+		file_put_contents($cronSettingsFile, $cronSettings);
+	}
 } else {
 	echo 'Must provide server name as first argument.' . PHP_EOL;
 	exit();

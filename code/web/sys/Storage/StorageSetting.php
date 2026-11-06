@@ -6,6 +6,7 @@ class StorageSetting extends DataObject {
 	public $name;
 	public $driver;
 	public $isActive;
+	public $deleteDelayDays;
 
 	static $_objectStructure = [];
 	static function getObjectStructure(string $context = ''): array {
@@ -45,6 +46,14 @@ class StorageSetting extends DataObject {
 				'label' => 'Active',
 				'description' => 'Use this configuration as the active storage backend. Only one configuration can be active at a time.',
 				'default' => 0,
+			],
+			'deleteDelayDays' => [
+				'property' => 'deleteDelayDays',
+				'type' => 'integer',
+				'label' => 'Delete Delay (days)',
+				'description' => 'How many days a replaced or deleted file is kept before it is removed, so pages and caches that still point at it keep working.',
+				'default' => 7,
+				'min' => 0,
 			],
 			'effectiveDataRoot' => [
 				'property'    => 'effectiveDataRoot',
