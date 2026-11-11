@@ -1,0 +1,18 @@
+# Files the Aspen images never use at runtime. docker/Dockerfile copies the
+# whole build context into /usr/local/aspen-discovery, so anything not listed
+# here ends up in every image.
+
+# Git metadata from the CI checkout (~300 MB). Upgrades in Docker are done by
+# changing the image tag, never with git inside a container.
+.git
+
+# CI configuration
+.github
+.gitlab-ci.yml
+
+# IDE project files
+**/.idea
+**/*.iml
+
+# tests/ must stay: composer.json autoloads it outside autoload-dev, so the
+# image's composer install fails without it.
