@@ -46,9 +46,6 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 #   Temp files
 26 0 * * *  cd /tmp; rm -rf CURLCOOKIE*
 
-#   Run Scheduled Updates 
-*/5 * * * * php /usr/local/aspen-discovery/code/web/cron/runScheduledUpdate.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
-
 #   Update Translations from Community 
 15 1 * * *    sudo -u www-data    php /usr/local/aspen-discovery/code/web/cron/updateCommunityTranslations.php {sitename} >/proc/1/fd/1 2>/proc/1/fd/2
 
